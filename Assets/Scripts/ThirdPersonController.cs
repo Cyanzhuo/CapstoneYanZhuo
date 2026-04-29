@@ -428,7 +428,7 @@ public class ThirdPersonController : MonoBehaviour
 
     private void ApplySliding()
     {
-        if (OnSlope() && isCrouching && IsGrounded)
+        if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
         {
             // Calculate slope angle
             float slopeAngle = Vector3.Angle(slopeHit.normal, Vector3.up);
