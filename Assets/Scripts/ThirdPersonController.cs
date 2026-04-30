@@ -303,6 +303,8 @@ public class ThirdPersonController : MonoBehaviour
 
     void FixedUpdate()
     {
+        ApplySliding();
+
         if (isGrabbingLedge)
         {
             HandleLedgeGrab();
@@ -394,7 +396,6 @@ public class ThirdPersonController : MonoBehaviour
             }
         }
         
-        ApplySliding();
         if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
         {
             targetVelocity += slideVelocity;
@@ -495,13 +496,15 @@ public class ThirdPersonController : MonoBehaviour
                 // Apply friction to slow down over time
                 if (IsGrounded)
                 {
-                    // HALVE friction when crouching on flat ground
+                    // Reduce friction when crouching on flat ground
                     float currentFriction = isCrouching ? slideFriction : friction;
                     slideVelocity = Vector3.MoveTowards(slideVelocity, Vector3.zero, currentFriction * Time.fixedDeltaTime);
                 }
                 else
                 {
-                    slideVelocity = Vector3.MoveTowards(slideVelocity, Vector3.zero, airFriction * Time.fixedDeltaTime);
+                    // Increase rate of speed loss when grabbing a ledge
+                    float currentFriction = isGrabbingLedge ? friction : airFriction;
+                    slideVelocity = Vector3.MoveTowards(slideVelocity, Vector3.zero, currentFriction * Time.fixedDeltaTime);
                 }
             }
         }
@@ -632,11 +635,6 @@ public class ThirdPersonController : MonoBehaviour
                 rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f, rb.linearVelocity.z); // Cut vertical velocity in half if falling
             }
         }
-
-        if (isBraking)
-        {
-            SetSlideVelocity(Vector3.zero);
-        }
         
         isDashing = true;
         pauseFastFall = true;
@@ -646,20 +644,34 @@ public class ThirdPersonController : MonoBehaviour
         Vector3 moveDir = GetCameraRelativeDirection(moveInput);
         dashDirection = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
 
+        if (isBraking)
+        {
+            SetSlideVelocity(Vector3.zero);
+        }
+        else // Redirect slide direction
+        {
+            SetSlideVelocity(slideVelocity.magnitude * dashDirection);
+        }
+
         if (dashSound) AudioSource.PlayClipAtPoint(dashSound, transform.position);
     }
 
     private void ApplyDashMovement()
     {
         // Dash overrides INPUT movement, but preserves slide velocity
-        Vector3 dashVelocity = dashDirection * dashSpeed;
-        
-        // Add slide velocity on top (your momentum carries through)
-        dashVelocity += slideVelocity;
+        float appliedDashSpeed = dashSpeed + Mathf.Max(0, targetVelocity.magnitude - moveSpeed);
+        Vector3 dashVelocity = dashDirection * appliedDashSpeed;
         
         // Preserve vertical velocity
         dashVelocity.y = rb.linearVelocity.y;
         
+        // Handle slope projection
+        if (OnSlope() && !exitingSlope)
+        {
+            dashVelocity = Vector3.ProjectOnPlane(dashVelocity, slopeHit.normal);
+            rb.AddForce(-slopeHit.normal * slopeDownForce, ForceMode.Force);
+        }
+
         // Apply combined velocity
         rb.linearVelocity = dashVelocity;
 
@@ -674,10 +686,8 @@ public class ThirdPersonController : MonoBehaviour
 
     private void ApplyAttackMovement()
     {
-        Vector3 attackVelocity = attackDirection * attackForce;
-
-        // Add slide velocity on top of attack force (your momentum carries through)
-        attackVelocity += slideVelocity;
+        float appliedAttackForce = attackForce + Mathf.Max(0, targetVelocity.magnitude - moveSpeed);
+        Vector3 attackVelocity = attackDirection * appliedAttackForce;
 
         if (!attackShouldModifyYaxis)
         {

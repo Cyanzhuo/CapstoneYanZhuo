@@ -426,10 +426,10 @@ public class Attack : MonoBehaviour
                 // We use dashDirection if it exists, otherwise fall back to player forward
                 Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
 
-                // 2. CAPPING LOGIC: If slide velocity is less than 5f, floor it at 5f
-                if (playerController.slideVelocity.magnitude < 5f)
+                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
+                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
                 {
-                    playerController.slideVelocity = dashAtkDir * 5f;
+                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
                 }
             }
         }
@@ -566,10 +566,10 @@ public class Attack : MonoBehaviour
                 // We use dashDirection if it exists, otherwise fall back to player forward
                 Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
 
-                // 2. CAPPING LOGIC: If slide velocity is less than 5f, floor it at 5f
-                if (playerController.slideVelocity.magnitude < 5f)
+                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
+                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
                 {
-                    playerController.slideVelocity = dashAtkDir * 5f;
+                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
                 }
             }
         }
@@ -601,10 +601,10 @@ public class Attack : MonoBehaviour
                 // We use dashDirection if it exists, otherwise fall back to player forward
                 Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
 
-                // 2. CAPPING LOGIC: If slide velocity is less than 5f, floor it at 5f
-                if (playerController.slideVelocity.magnitude < 5f)
+                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
+                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
                 {
-                    playerController.slideVelocity = dashAtkDir * 5f;
+                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
                 }
             }
         }

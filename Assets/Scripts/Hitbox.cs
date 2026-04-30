@@ -159,7 +159,7 @@ public class Hitbox : MonoBehaviour
                         
                     case Attack.AttackType.DashSlam:
                         enemy.TakeDamage(weaponData.normalDamage);
-                        Vector3 dsHorizontalKnockback = knockbackDir * (attack.bounceForce + playerController.slideVelocity.magnitude * 0.8f); // Attack velocity is calculated differently, it adds slide velocity instead of replacing it with it
+                        Vector3 dsHorizontalKnockback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f); // Attack velocity is calculated differently, it adds slide velocity instead of replacing it with it
                         Vector3 dsVerticalKnockback = Vector3.down * 10f;
                         Vector3 dsTotalKnockback = dsHorizontalKnockback + dsVerticalKnockback;
                         enemy.Knockback(dsTotalKnockback.normalized, dsTotalKnockback.magnitude, false);
