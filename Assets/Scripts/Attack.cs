@@ -246,7 +246,7 @@ public class Attack : MonoBehaviour
             return;
         }
 
-        if (playerController.isCrouching && playerController.IsGrounded) // Crouch Launcher
+        if (playerController.IsGrounded && (playerController.isCrouching || playerController.landedFromGroundSlam)) // Crouch Launcher
         {
             Launcher(launcherForce, true);
         }
