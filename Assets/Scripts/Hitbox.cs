@@ -159,7 +159,7 @@ public class Hitbox : MonoBehaviour
                         
                     case Attack.AttackType.DashSlam:
                         enemy.TakeDamage(weaponData.normalDamage);
-                        Vector3 dsHorizontalKnockback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f); // Attack velocity is calculated differently, it adds slide velocity instead of replacing it with it
+                        Vector3 dsHorizontalKnockback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f);
                         Vector3 dsVerticalKnockback = Vector3.down * 10f;
                         Vector3 dsTotalKnockback = dsHorizontalKnockback + dsVerticalKnockback;
                         enemy.Knockback(dsTotalKnockback.normalized, dsTotalKnockback.magnitude, false);
@@ -194,6 +194,7 @@ public class Hitbox : MonoBehaviour
                         }
                         ResetDashes();
                         playerController.availableJumps = 1; // Reset jumps
+                        playerController.availableAerialPushes = 1; // Reset aerial pushes
                         playerController.pauseFastFall = false;
                         playerController.StopAttacking();
 
@@ -235,6 +236,27 @@ public class Hitbox : MonoBehaviour
 
                         ResetDashes();
                         playerController.availableJumps = 1; // Reset jumps
+                        playerController.availableAerialPushes = 1; // Reset aerial pushes
+                        break;
+
+                    case Attack.AttackType.AerialPush:
+                        enemy.TakeDamage(weaponData.normalDamage);
+                        
+                        Vector3 apHorizontalKnockback = knockbackDir * (attack.defaultForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed)) * 0.8f;
+                        Vector3 apVerticalKnockback = Vector3.up * playerController.shortJumpForce;
+                        Vector3 apKnockback = apHorizontalKnockback + apVerticalKnockback;
+                        enemy.Knockback(apKnockback.normalized, apKnockback.magnitude, false);
+
+                        ResetDashes();
+
+                        break;
+
+                    case Attack.AttackType.WeakPush:
+                        enemy.TakeDamage(weaponData.normalDamage);
+                        float wpKnockback = Mathf.Max(1f, playerController.targetVelocity.magnitude * 0.8f);
+                        enemy.Knockback(knockbackDir, wpKnockback, true);
+
+                        ResetDashes();
 
                         break;
 

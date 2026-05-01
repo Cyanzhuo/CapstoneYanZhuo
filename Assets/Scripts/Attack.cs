@@ -44,7 +44,7 @@ public class Attack : MonoBehaviour
     // Internal State Flags for the Hitbox to read
     public enum AttackType
     {
-        None, Normal, Charged, Finisher, Launcher, GroundSlam, DashSlam, Spike, BoundSpike
+        None, Normal, Charged, Finisher, Launcher, GroundSlam, DashSlam, Spike, BoundSpike, AerialPush, WeakPush
     }
 
     [HideInInspector] public AttackType currentAttackType;
@@ -250,6 +250,10 @@ public class Attack : MonoBehaviour
         {
             Launcher(launcherForce, true);
         }
+        else if (windingUpSlam)
+        {
+            AerialPush();
+        }
         else if (attackStage > 0 && !isInCooldown) // Chain Launcher
         {
             if (playerController.IsGrounded || playerController.canCoyote)
@@ -270,7 +274,8 @@ public class Attack : MonoBehaviour
         if ((currentAttackType == AttackType.GroundSlam ||
             currentAttackType == AttackType.DashSlam ||
             currentAttackType == AttackType.Spike ||
-            currentAttackType == AttackType.BoundSpike) && !playerController.IsGrounded)
+            currentAttackType == AttackType.BoundSpike ||
+            currentAttackType == AttackType.AerialPush) && !playerController.IsGrounded)
         {
             return;
         }
@@ -486,8 +491,7 @@ public class Attack : MonoBehaviour
         PlayEffect(attackEffect);
         if (countsAsDashSlam)
         {
-            Vector3 moveDir = playerController.GetCameraRelativeDirection(playerController.moveInput);
-            Vector3 slamDirection = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
+            Vector3 slamDirection = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
             playerController.SetSlideVelocity(slamDirection * playerController.slideVelocity.magnitude);
             playerController.SetAttackForce(slamDirection, bounceForce, false);
             currentAttackType = AttackType.DashSlam;
@@ -611,6 +615,30 @@ public class Attack : MonoBehaviour
 
         isInCooldown = true;
         cooldownTimer = finisherCooldownTime;
+    }
+    
+    private void AerialPush()
+    {
+        windingUpSlam = false;
+        PlayEffect(attackEffect);
+        weaponHitbox.ActivateHitbox();
+        Invoke(nameof(StopHitbox), shortCooldownTime);
+        if (playerController.availableAerialPushes > 0)
+        {
+            currentAttackType = AttackType.AerialPush;
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, playerController.shortJumpForce, rb.linearVelocity.z);
+            Vector3 moveDir = playerController.GetCameraRelativeDirection(playerController.moveInput);
+            Vector3 pushDirection = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
+            playerController.SetAttackForce(pushDirection, bounceForce, false);
+            playerController.availableAerialPushes --;
+        }
+        else
+        {
+            currentAttackType = AttackType.WeakPush;
+        }
+
+        isInCooldown = true;
+        cooldownTimer = shortCooldownTime;
     }
 
     private void ExecuteChargeAttack()

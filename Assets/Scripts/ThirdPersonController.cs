@@ -105,6 +105,7 @@ public class ThirdPersonController : MonoBehaviour
     [HideInInspector] public Vector3 targetVelocity;
     private float lastGroundedTime;
     [HideInInspector] public int availableJumps;
+    [HideInInspector] public int availableAerialPushes;
     [HideInInspector] public bool canCoyote;
     private bool wasGrounded;
     private float dashTimer;
@@ -218,7 +219,7 @@ public class ThirdPersonController : MonoBehaviour
     {
         if (attack != null &&
         (attack.currentAttackType == Attack.AttackType.GroundSlam ||
-         attack.currentAttackType == Attack.AttackType.DashSlam))
+         attack.currentAttackType == Attack.AttackType.DashSlam) || attack.windingUpSlam)
         {
             return; // Don't allow jumping if we're in the middle of a slam attack
         }
@@ -540,11 +541,7 @@ public class ThirdPersonController : MonoBehaviour
     private void ExecuteJump()
     {
         exitingSlope = true;
-        if (attack)
-        {
-            if (attack.windingUpSlam) attack.windingUpSlam = false; // Cancel ground slam windup
-            if (attack.isInCooldown && !isCrouching && !attack.windingUpSlam) attack.ResetCombo();
-        }
+        if (attack && attack.isInCooldown && !isCrouching && !attack.windingUpSlam) attack.ResetCombo();
 
         // --- DASH JUMP MOMENTUM TRANSFER ---
         // If we jump during a dash or the 0.1s leniency window after a dash
@@ -876,6 +873,7 @@ public class ThirdPersonController : MonoBehaviour
             if (!wasGrounded)
             {
                 availableJumps = 1;
+                availableAerialPushes = 1;
                 if (dashUpgradeObtained)
                 {
                     availableDashes = 2;
