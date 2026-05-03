@@ -9,6 +9,10 @@ public class EnemyBehaviour : MonoBehaviour
     int collisionDamage = 5;
     float timeTillDemise = 0.5f;
     float demiseTimer = 0f;
+    float pushTimer = 0f;
+    bool beingPushed;
+    Vector3 pushDirection;
+    Vector3 softKnockback;
     
     [Header("Gravity")]
     float gravityMultiplier = 2f;
@@ -96,6 +100,16 @@ public class EnemyBehaviour : MonoBehaviour
                 }
             }
         }
+        if (beingPushed)
+        {
+            pushTimer -= Time.deltaTime;
+            if (pushTimer <= 0)
+            {
+                Knockback(softKnockback.normalized, softKnockback.magnitude, false);
+                pauseFastFall = false;
+                beingPushed = false;
+            }
+        }
     }
 
     void FixedUpdate()
@@ -110,6 +124,10 @@ public class EnemyBehaviour : MonoBehaviour
             {
                 rb.linearVelocity += Vector3.up * Physics.gravity.y * (gravityMultiplier - 1) * Time.fixedDeltaTime; // Apply extra gravity when falling for snappier jumps
             }
+        }
+        if (beingPushed)
+        {
+            ApplyPush();
         }
     }
 
@@ -143,6 +161,28 @@ public class EnemyBehaviour : MonoBehaviour
             }
             
             rb.AddForce(knockback, ForceMode.VelocityChange);
+        }
+    }
+
+    public void Push(Vector3 direction, Vector3 verticalMotion, float duration, Vector3 knockback)
+    {
+        if (rb != null)
+        {
+            beingPushed = true;
+            pauseFastFall = true;
+            pushTimer = duration;
+            pushDirection = direction;
+            softKnockback = knockback;
+            rb.linearVelocity = new Vector3(direction.x, verticalMotion.y, direction.z);
+        }
+    }
+
+    void ApplyPush()
+    {
+        if (rb != null)
+        {
+            pushDirection.y = rb.linearVelocity.y;
+            rb.linearVelocity = pushDirection;
         }
     }
 

@@ -242,10 +242,10 @@ public class Hitbox : MonoBehaviour
                     case Attack.AttackType.AerialPush:
                         enemy.TakeDamage(weaponData.normalDamage);
                         
-                        Vector3 apHorizontalKnockback = knockbackDir * (attack.defaultForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed)) * 0.8f;
-                        Vector3 apVerticalKnockback = Vector3.up * playerController.shortJumpForce;
-                        Vector3 apKnockback = apHorizontalKnockback + apVerticalKnockback;
-                        enemy.Knockback(apKnockback.normalized, apKnockback.magnitude, false);
+                        Vector3 apHorizontalPushback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f);
+                        Vector3 apVerticalPushback = Vector3.up * playerController.shortJumpForce;
+                        Vector3 apKnockback = knockbackDir * (Mathf.Max(playerController.moveSpeed * 0.5f, playerController.targetVelocity.magnitude) * 0.8f);
+                        enemy.Push(apHorizontalPushback, apVerticalPushback, 0.25f, apKnockback);
 
                         ResetDashes();
 

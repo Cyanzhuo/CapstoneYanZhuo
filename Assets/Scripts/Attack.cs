@@ -478,7 +478,7 @@ public class Attack : MonoBehaviour
 
         if (playerController.moveInput.magnitude == 0 && !countsAsDashSlam)
         {
-            playerController.slideVelocity *= 0.5f; // Reduce slide speed if not holding a direction for more control during slam
+            playerController.SetSlideVelocity(Vector3.zero); // Kill slide speed if not holding a direction for more control during slam
         }
     }
 

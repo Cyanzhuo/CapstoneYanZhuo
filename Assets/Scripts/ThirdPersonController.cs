@@ -217,17 +217,23 @@ public class ThirdPersonController : MonoBehaviour
 
     private void OnJumpStarted()
     {
-        if (attack != null &&
-        (attack.currentAttackType == Attack.AttackType.GroundSlam ||
-         attack.currentAttackType == Attack.AttackType.DashSlam) || attack.windingUpSlam)
+        if (attack != null && attack.windingUpSlam)
         {
-            return; // Don't allow jumping if we're in the middle of a slam attack
+            return;
         }
 
-        if (!IsGrounded && (!enableDoubleJump || availableJumps <= 0))
+        bool performingSlam = attack != null &&
+            (attack.currentAttackType == Attack.AttackType.GroundSlam ||
+            attack.currentAttackType == Attack.AttackType.DashSlam);
+
+        if (!IsGrounded && (!enableDoubleJump || availableJumps <= 0) || performingSlam)
         {
             jumpBuffered = true;
             jumpBufferTimer = jumpBufferTime;
+            if (performingSlam)
+            {
+                highJumpRequested = true;
+            }
         }
         else
         {
