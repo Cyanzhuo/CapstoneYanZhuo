@@ -167,6 +167,9 @@ public class ThirdPersonController : MonoBehaviour
 
         isAttacking = true;
         isDashing = false;
+        
+        // Redirect slide velocity to match attack direction
+        SetSlideVelocity(direction * slideVelocity.magnitude);
     }
 
     public void StopAttacking()
@@ -431,6 +434,13 @@ public class ThirdPersonController : MonoBehaviour
         {
             Quaternion targetRot = Quaternion.LookRotation(moveDir);
             rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
+            if (!isBraking && !IsSlideRotationFrozen) // Freeze slide rotation during wall jump arc
+            {
+                // Gradually align slide velocity with input direction
+                Vector3 targetVelocity = moveDir.normalized * slideVelocity.magnitude;
+                slideVelocity = Vector3.RotateTowards(slideVelocity, targetVelocity, 
+                    flatGroundTurnSpeed * Time.fixedDeltaTime, 0f);
+            }
         }
     }
 
@@ -483,23 +493,9 @@ public class ThirdPersonController : MonoBehaviour
                 }
             }
             
-            // If not braking, apply normal slide rotation and friction
+            // If not braking, apply normal slide friction
             if (!isBraking)
             {
-                // FREEZE ROTATION during wall jump arc
-                if (!IsSlideRotationFrozen)
-                {
-                    Vector3 moveDir = GetCameraRelativeDirection(moveInput);
-                    
-                    if (moveDir != Vector3.zero)
-                    {
-                        // Gradually align slide velocity with input direction
-                        Vector3 targetVelocity = moveDir.normalized * slideVelocity.magnitude;
-                        slideVelocity = Vector3.RotateTowards(slideVelocity, targetVelocity, 
-                            flatGroundTurnSpeed * Time.fixedDeltaTime, 0f);
-                    }
-                }
-                
                 // Apply friction to slow down over time
                 if (IsGrounded)
                 {

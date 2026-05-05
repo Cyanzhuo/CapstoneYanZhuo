@@ -245,7 +245,7 @@ public class Hitbox : MonoBehaviour
                         Vector3 apHorizontalPushback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f);
                         Vector3 apVerticalPushback = Vector3.up * playerController.shortJumpForce;
                         Vector3 apKnockback = knockbackDir * (Mathf.Max(playerController.moveSpeed * 0.5f, playerController.targetVelocity.magnitude) * 0.8f);
-                        enemy.Push(apHorizontalPushback, apVerticalPushback, 0.25f, apKnockback);
+                        enemy.Push(apHorizontalPushback, apVerticalPushback, apKnockback);
 
                         ResetDashes();
 
@@ -285,8 +285,7 @@ public class Hitbox : MonoBehaviour
             if (!playerController.IsGrounded && 
                 (attack.currentAttackType == Attack.AttackType.Normal ||
                 attack.currentAttackType == Attack.AttackType.Finisher ||
-                attack.currentAttackType == Attack.AttackType.Charged ||
-                attack.currentAttackType == Attack.AttackType.Spike))
+                attack.currentAttackType == Attack.AttackType.Charged))
             {
                 playerController.StopAttacking();
 

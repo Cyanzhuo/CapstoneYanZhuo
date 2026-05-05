@@ -9,7 +9,6 @@ public class EnemyBehaviour : MonoBehaviour
     int collisionDamage = 5;
     float timeTillDemise = 0.5f;
     float demiseTimer = 0f;
-    float pushTimer = 0f;
     bool beingPushed;
     Vector3 pushDirection;
     Vector3 softKnockback;
@@ -31,6 +30,7 @@ public class EnemyBehaviour : MonoBehaviour
     // Components cached for performance
     private Rigidbody rb;
     [SerializeField] private Attack attack;
+    [SerializeField] private ThirdPersonController playerController;
 
     public enum EnemyState
     {
@@ -54,6 +54,14 @@ public class EnemyBehaviour : MonoBehaviour
     {
         // Cache references once at the very start
         rb = GetComponent<Rigidbody>();
+        if (attack == null)
+        {
+            attack = FindFirstObjectByType<Attack>();
+        }
+        if (playerController == null)
+        {
+            playerController = FindFirstObjectByType<ThirdPersonController>();
+        }
     }
 
     void Start()
@@ -102,8 +110,7 @@ public class EnemyBehaviour : MonoBehaviour
         }
         if (beingPushed)
         {
-            pushTimer -= Time.deltaTime;
-            if (pushTimer <= 0)
+            if (!playerController.isAttacking)
             {
                 Knockback(softKnockback.normalized, softKnockback.magnitude, false);
                 pauseFastFall = false;
@@ -164,13 +171,12 @@ public class EnemyBehaviour : MonoBehaviour
         }
     }
 
-    public void Push(Vector3 direction, Vector3 verticalMotion, float duration, Vector3 knockback)
+    public void Push(Vector3 direction, Vector3 verticalMotion, Vector3 knockback)
     {
         if (rb != null)
         {
             beingPushed = true;
             pauseFastFall = true;
-            pushTimer = duration;
             pushDirection = direction;
             softKnockback = knockback;
             rb.linearVelocity = new Vector3(direction.x, verticalMotion.y, direction.z);

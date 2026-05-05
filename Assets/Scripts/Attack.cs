@@ -403,10 +403,6 @@ public class Attack : MonoBehaviour
 
         Vector3 direction = (centrePoint.position - AttackOrigin).normalized;
         
-        // 1. INSTANTLY redirect slide velocity toward enemy
-        playerController.SetSlideVelocity(direction * playerController.slideVelocity.magnitude);
-        
-        // 2. Add lunge force
         playerController.SetAttackForce(direction, force, true);
     }
     #endregion
@@ -492,7 +488,6 @@ public class Attack : MonoBehaviour
         if (countsAsDashSlam)
         {
             Vector3 slamDirection = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
-            playerController.SetSlideVelocity(slamDirection * playerController.slideVelocity.magnitude);
             playerController.SetAttackForce(slamDirection, bounceForce, false);
             currentAttackType = AttackType.DashSlam;
         }
@@ -537,8 +532,7 @@ public class Attack : MonoBehaviour
 
         if (countsAsDashSlam)
         {
-            Vector3 slamDirection = transform.forward;
-            playerController.SetSlideVelocity(slamDirection * Mathf.Max(playerController.slideVelocity.magnitude, bounceForce)); // Ensure we maintain momentum after landing
+            playerController.SetSlideVelocity(transform.forward * Mathf.Max(playerController.slideVelocity.magnitude, bounceForce)); // Maintain momentum from dash slam after landing
         }
 
         StopHitbox();
