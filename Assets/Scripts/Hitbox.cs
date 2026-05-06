@@ -237,6 +237,8 @@ public class Hitbox : MonoBehaviour
                         ResetDashes();
                         playerController.availableJumps = 1; // Reset jumps
                         playerController.availableAerialPushes = 1; // Reset aerial pushes
+                        playerController.pauseFastFall = false;
+                        playerController.StopAttacking();
                         break;
 
                     case Attack.AttackType.AerialPush:
