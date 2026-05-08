@@ -30,6 +30,7 @@ public class Attack : MonoBehaviour
     [SerializeField] private float lightLauncherForce = 5f;
     public float juggleForce = 3f;
     public float bounceForce = 7.5f;
+    [SerializeField] private float slowFallSpeed = -1f;
     public LayerMask enemyLayer;
 
     [Header("Charge Attack")]
@@ -65,7 +66,9 @@ public class Attack : MonoBehaviour
     private int attackStage = 0;
     private float lastAttackTime;
     private float cooldownTimer;
+    private float attackDurationTimer;
     private bool hasPerformedChargedAttack;
+    [HideInInspector] public GameObject target;
     [HideInInspector] public bool isInCooldown;
     [HideInInspector] public bool countsAsDashSlam;
     [HideInInspector] public float appliedJuggleForce;
@@ -119,6 +122,16 @@ public class Attack : MonoBehaviour
             if (cooldownTimer <= 0)
             {
                 ResetCombo();
+            }
+        }
+
+        // Placeholder, in the final game this should be handled by Animation Events
+        if (attackDurationTimer > 0)
+        {
+            attackDurationTimer -= Time.deltaTime;
+            if (attackDurationTimer <= 0)
+            {
+                StopHitbox();
             }
         }
 
@@ -311,7 +324,6 @@ public class Attack : MonoBehaviour
     private void ExecuteAttack(bool finisherFlag, bool dontPerformNormalAttack)
     {
         isFinisher = finisherFlag;
-        playerController.pauseFastFall = true;
 
         if (isFinisher)
             currentAttackType = AttackType.Finisher;
@@ -321,7 +333,9 @@ public class Attack : MonoBehaviour
             currentAttackType = AttackType.Normal;
         else
             return;
-        
+
+        playerController.pauseFastFall = true;
+
         // 1. Setup Stats
         bool countsAsDashAttack = playerController.WasRecentlyDashing(0.1f);
         float range = countsAsDashAttack ? dashRange : defaultRange;
@@ -331,15 +345,15 @@ public class Attack : MonoBehaviour
         PlayEffect((isFinisher || isCharging) ? finisherEffect : attackEffect);
         
         // 3. Hitbox Activation
-        // In a real game, you'd call this via an Animation Event!
+        // In the final game, this should be called via an Animation Event
         weaponHitbox.ActivateHitbox();
-        Invoke(nameof(StopHitbox), shortCooldownTime); // Safety turn-off after 0.25 seconds
+        attackDurationTimer = shortCooldownTime;
 
         // 4. Lunge toward enemy (Magnetism)
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
         if (hits.Length > 0)
         {
-            GameObject target = GetBestTarget(hits);
+            target = GetBestTarget(hits);
             LungeAtTarget(target, force);
         }
         else
@@ -358,14 +372,15 @@ public class Attack : MonoBehaviour
             }
             if (!playerController.IsGrounded)
             {
-                if (isCharging)
+                if (isCharging && playerController.availableChargeAttackJumps > 0)
                 {
                     rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
                     rb.AddForce(Vector3.up * playerController.doubleJumpForce, ForceMode.Impulse);
+                    playerController.availableChargeAttackJumps --;
                 }
                 else
                 {
-                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(0, rb.linearVelocity.y), rb.linearVelocity.z);
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(slowFallSpeed, rb.linearVelocity.y), rb.linearVelocity.z);
                 }
             }
         }
@@ -442,7 +457,7 @@ public class Attack : MonoBehaviour
         appliedJuggleForce = force;
         currentAttackType = AttackType.Launcher;
         weaponHitbox.ActivateHitbox();
-        Invoke(nameof(StopHitbox), shortCooldownTime);
+        attackDurationTimer = shortCooldownTime;
         // ... animation/effect logic ...
         
         if (shouldTriggerCooldown)
@@ -466,8 +481,7 @@ public class Attack : MonoBehaviour
     private void GroundSlamWindup()
     {
         windingUpSlam = true;
-        playerController.pauseFastFall = true;
-        currentAttackType = AttackType.None;
+        StopHitbox(true);
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f, rb.linearVelocity.z); // Cut vertical velocity in half
         countsAsDashSlam = playerController.WasRecentlyDashing(0.1f);
         windUpTimer = windUpDuration;
@@ -547,7 +561,7 @@ public class Attack : MonoBehaviour
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         currentAttackType = AttackType.Spike;
         weaponHitbox.ActivateHitbox();
-        Invoke(nameof(StopHitbox), shortCooldownTime);
+        attackDurationTimer = shortCooldownTime;
         // ... animation/effect logic ...
         
         if (countsAsDashSlam)
@@ -582,7 +596,7 @@ public class Attack : MonoBehaviour
         PlayEffect(attackEffect);
         currentAttackType = AttackType.BoundSpike;
         weaponHitbox.ActivateHitbox();
-        Invoke(nameof(StopHitbox), shortCooldownTime);
+        attackDurationTimer = shortCooldownTime;
         // ... animation/effect logic ...
         
         if (countsAsDashSlam)
@@ -616,7 +630,7 @@ public class Attack : MonoBehaviour
         windingUpSlam = false;
         PlayEffect(attackEffect);
         weaponHitbox.ActivateHitbox();
-        Invoke(nameof(StopHitbox), shortCooldownTime);
+        attackDurationTimer = shortCooldownTime;
         if (playerController.availableAerialPushes > 0)
         {
             currentAttackType = AttackType.AerialPush;
@@ -666,13 +680,13 @@ public class Attack : MonoBehaviour
         effect.Play();
     }
 
-    public void StopHitbox()
+    public void StopHitbox(bool shouldPauseFastFall = false)
     {
         currentAttackType = AttackType.None;
         isFinisher = false;
         weaponHitbox.DeactivateHitbox();
         playerController.StopAttacking();
-        playerController.pauseFastFall = false;
+        playerController.pauseFastFall = shouldPauseFastFall;
     }
 
     private void ResetCharge()

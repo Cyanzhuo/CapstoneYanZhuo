@@ -37,6 +37,13 @@ public class Hitbox : MonoBehaviour
         }
     }
 
+    private void ResetJumps()
+    {
+        playerController.availableJumps = 1;
+        playerController.availableAerialPushes = 1;
+        playerController.availableChargeAttackJumps = 1;
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Enemy"))
@@ -71,7 +78,11 @@ public class Hitbox : MonoBehaviour
 
                         enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
-                        playerController.StopAttacking();
+                        // Only stop attack movement if you hit the chosen target
+                        if (attack.target == enemy.gameObject)
+                        {
+                            playerController.StopAttacking();
+                        }
 
                         break;
                         
@@ -111,7 +122,11 @@ public class Hitbox : MonoBehaviour
 
                         enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
-                        playerController.StopAttacking();
+                        playerController.pauseFastFall = false;
+                        if (attack.target == enemy.gameObject)
+                        {
+                            playerController.StopAttacking();
+                        }
 
                         break;
                         
@@ -148,7 +163,10 @@ public class Hitbox : MonoBehaviour
                         enemy.Knockback(launcherTotalKnockback.normalized, launcherTotalKnockback.magnitude, false);
 
                         ResetDashes();
-                        playerController.StopAttacking();
+                        if (attack.target == enemy.gameObject)
+                        {
+                            playerController.StopAttacking();
+                        }
 
                         break;
                         
@@ -193,10 +211,12 @@ public class Hitbox : MonoBehaviour
                             enemy.currentState = EnemyBehaviour.EnemyState.Spiked;
                         }
                         ResetDashes();
-                        playerController.availableJumps = 1; // Reset jumps
-                        playerController.availableAerialPushes = 1; // Reset aerial pushes
+                        ResetJumps();
                         playerController.pauseFastFall = false;
-                        playerController.StopAttacking();
+                        if (attack.target == enemy.gameObject)
+                        {
+                            playerController.StopAttacking();
+                        }
 
                         break;
 
@@ -235,10 +255,12 @@ public class Hitbox : MonoBehaviour
                         }
 
                         ResetDashes();
-                        playerController.availableJumps = 1; // Reset jumps
-                        playerController.availableAerialPushes = 1; // Reset aerial pushes
+                        ResetJumps();
                         playerController.pauseFastFall = false;
-                        playerController.StopAttacking();
+                        if (attack.target == enemy.gameObject)
+                        {
+                            playerController.StopAttacking();
+                        }
                         break;
 
                     case Attack.AttackType.AerialPush:
@@ -275,7 +297,10 @@ public class Hitbox : MonoBehaviour
                         }
 
                         ResetDashes();
-                        playerController.StopAttacking();
+                        if (attack.target == enemy.gameObject)
+                        {
+                            playerController.StopAttacking();
+                        }
 
                         break;
                 }
@@ -317,5 +342,10 @@ public class Hitbox : MonoBehaviour
                 DeactivateHitbox();
             }
         }
+    }
+    
+    void OnTriggerStay(Collider other)
+    {
+        OnTriggerEnter(other); // For if the attack is triggered before the weapon has fully left the enemy's hitbox, ensuring they still get hit
     }
 }

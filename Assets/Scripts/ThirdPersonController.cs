@@ -106,6 +106,7 @@ public class ThirdPersonController : MonoBehaviour
     private float lastGroundedTime;
     [HideInInspector] public int availableJumps;
     [HideInInspector] public int availableAerialPushes;
+    [HideInInspector] public int availableChargeAttackJumps;
     [HideInInspector] public bool canCoyote;
     private bool wasGrounded;
     private float dashTimer;
@@ -167,7 +168,7 @@ public class ThirdPersonController : MonoBehaviour
 
         isAttacking = true;
         isDashing = false;
-        
+
         // Redirect slide velocity to match attack direction
         SetSlideVelocity(direction * slideVelocity.magnitude);
     }
@@ -876,6 +877,7 @@ public class ThirdPersonController : MonoBehaviour
             {
                 availableJumps = 1;
                 availableAerialPushes = 1;
+                availableChargeAttackJumps = 1;
                 if (dashUpgradeObtained)
                 {
                     availableDashes = 2;
