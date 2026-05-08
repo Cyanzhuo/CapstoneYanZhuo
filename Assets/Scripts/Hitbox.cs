@@ -306,7 +306,7 @@ public class Hitbox : MonoBehaviour
                 }
             }
         }
-        else if (other.CompareTag("HazardWall") && !playerController.isGrabbingLedge) // If player hits a hazard wall, bounce them up and away from it
+        else if (other.CompareTag("HazardWall") && !playerController.isGrabbingLedge && !hasBounced) // If player hits a hazard wall, bounce them up and away from it
         {
             Rigidbody playerRB = playerController.GetComponent<Rigidbody>();
             if (!playerController.IsGrounded && 
@@ -339,6 +339,7 @@ public class Hitbox : MonoBehaviour
                 float bounceSpeed = Mathf.Max(playerController.slideVelocity.magnitude, playerController.doubleJumpForce);
                 playerController.SetSlideVelocity(horizontalDir * bounceSpeed);
                 
+                hasBounced = true;
                 DeactivateHitbox();
             }
         }
