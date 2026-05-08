@@ -544,6 +544,7 @@ public class ThirdPersonController : MonoBehaviour
     private void ExecuteJump()
     {
         exitingSlope = true;
+        canCoyote = false;
         if (attack && attack.isInCooldown && !isCrouching && !attack.windingUpSlam) attack.ResetCombo();
 
         // --- DASH JUMP MOMENTUM TRANSFER ---
