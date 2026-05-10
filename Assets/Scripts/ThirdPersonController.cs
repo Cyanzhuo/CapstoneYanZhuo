@@ -32,6 +32,7 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] private float highJumpMultiplier = 1.25f;
     [SerializeField] private float gravityMultiplier = 2f;
     [SerializeField] private float lowGravityMultiplier = 0.5f;
+    [SerializeField] public float slowFallSpeed = -1f;
     [SerializeField] public float slamJumpTime = 0.2f;
     [HideInInspector] public float slamJumpTimer;
 
@@ -118,6 +119,7 @@ public class ThirdPersonController : MonoBehaviour
     [HideInInspector] public bool isCrouching;
     [HideInInspector] public bool pauseFastFall;
     [HideInInspector] public bool landedFromGroundSlam;
+    [HideInInspector] public bool attackHasSetEndTime;
     bool isBraking = false;
     public bool WasRecentlyDashing(float leniency) => isDashing || (Time.time - dashEndTime < leniency);
 
@@ -152,10 +154,11 @@ public class ThirdPersonController : MonoBehaviour
         slideVelocity = velocity;
     }
 
-    public void SetAttackForce(Vector3 direction, float force, bool shouldModifyYaxis)
+    public void SetAttackForce(Vector3 direction, float force, bool shouldModifyYaxis, bool hasSetEndTime = false)
     {
         attackDirection = direction;
         attackForce = force;
+        attackHasSetEndTime = hasSetEndTime;
 
         if (shouldModifyYaxis)
         {
@@ -623,18 +626,18 @@ public class ThirdPersonController : MonoBehaviour
             attack.StopHitbox();
             attack.windingUpSlam = false; // Cancel ground slam windup if we dash early
             if (attack.isInCooldown) attack.ResetCombo();
-            if (attack.currentAttackType == Attack.AttackType.GroundSlam ||
-            attack.currentAttackType == Attack.AttackType.DashSlam) StopCoroutine(attack.CheckGroundSlamLanding());
+            if (attack.groundSlamLandingCoroutine != null)
+            {
+                StopCoroutine(attack.groundSlamLandingCoroutine);
+                attack.groundSlamLandingCoroutine = null;
+            }
         }
         freezeRotation = false;
 
         if (!IsGrounded)
         {
             availableDashes--;
-            if (rb.linearVelocity.y < 0)
-            {
-                rb.linearVelocity = new Vector3(rb.linearVelocity.x, rb.linearVelocity.y * 0.5f, rb.linearVelocity.z); // Cut vertical velocity in half if falling
-            }
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, slowFallSpeed), rb.linearVelocity.z);
         }
         
         isDashing = true;
@@ -763,6 +766,19 @@ public class ThirdPersonController : MonoBehaviour
         
         // Face the wall (opposite of where the wall is facing)
         transform.rotation = Quaternion.LookRotation(-ledgeNormal);
+
+        // Reset aerial actions
+        availableJumps = 1;
+        availableAerialPushes = 1;
+        availableChargeAttackJumps = 1;
+        if (dashUpgradeObtained)
+        {
+            availableDashes = 2;
+        }
+        else
+        {
+            availableDashes = 1;
+        }
         
         if (animator) animator.SetBool("IsGrabbingLedge", true);
     }

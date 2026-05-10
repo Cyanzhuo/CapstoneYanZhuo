@@ -30,7 +30,6 @@ public class Attack : MonoBehaviour
     [SerializeField] private float lightLauncherForce = 5f;
     public float juggleForce = 3f;
     public float bounceForce = 7.5f;
-    [SerializeField] private float slowFallSpeed = -1f;
     public LayerMask enemyLayer;
 
     [Header("Charge Attack")]
@@ -75,6 +74,7 @@ public class Attack : MonoBehaviour
     [HideInInspector] public bool windingUpSlam;
     private float windUpTimer;
     private float windUpDuration = 0.2f;
+    public Coroutine groundSlamLandingCoroutine;
 
     // Helper property for chest-level origin
     private Vector3 AttackOrigin => transform.position + Vector3.up * 0.6f;
@@ -129,7 +129,7 @@ public class Attack : MonoBehaviour
         if (attackDurationTimer > 0)
         {
             attackDurationTimer -= Time.deltaTime;
-            if (attackDurationTimer <= 0)
+            if (attackDurationTimer <= 0 && (!playerController.isAttacking || playerController.attackHasSetEndTime)) // Ensure the hitbox doesn't cut while the player is in the middle of a lunge (unless explicitly set to end)
             {
                 StopHitbox();
             }
@@ -172,8 +172,9 @@ public class Attack : MonoBehaviour
     #region Input Methods
     private void OnAttackStarted()
     {
-        if ((currentAttackType == AttackType.GroundSlam ||
-            currentAttackType == AttackType.DashSlam) && !playerController.IsGrounded)
+        if (((currentAttackType == AttackType.GroundSlam ||
+            currentAttackType == AttackType.DashSlam) && !playerController.IsGrounded) ||
+            playerController.isAttacking)
         {
             return;
         }
@@ -380,7 +381,7 @@ public class Attack : MonoBehaviour
                 }
                 else
                 {
-                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(slowFallSpeed, rb.linearVelocity.y), rb.linearVelocity.z);
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(playerController.slowFallSpeed, rb.linearVelocity.y), rb.linearVelocity.z);
                 }
             }
         }
@@ -514,7 +515,7 @@ public class Attack : MonoBehaviour
         // ... animation/effect logic ...
 
         // Start checking for landing to apply slide momentum
-        StartCoroutine(CheckGroundSlamLanding());
+        groundSlamLandingCoroutine = StartCoroutine(CheckGroundSlamLanding());
     }
 
     public IEnumerator CheckGroundSlamLanding()
@@ -637,7 +638,7 @@ public class Attack : MonoBehaviour
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, playerController.shortJumpForce, rb.linearVelocity.z);
             Vector3 moveDir = playerController.GetCameraRelativeDirection(playerController.moveInput);
             Vector3 pushDirection = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
-            playerController.SetAttackForce(pushDirection, bounceForce, false);
+            playerController.SetAttackForce(pushDirection, bounceForce, false, true);
             playerController.availableAerialPushes --;
         }
         else
