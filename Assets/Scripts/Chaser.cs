@@ -11,6 +11,8 @@ public class Chaser : MonoBehaviour
     [SerializeField] Transform targetTransform;
     [SerializeField] Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
     [SerializeField] float idleDuration = 3f; // Time to stay in Idle state before patrolling
+    [SerializeField] float focusDuration = 5f; // Time to stay in FocusOnTarget state
+    [SerializeField] float retreatDuration = 2f; // Time to stay in Retreat state
 
     int currentPatrolIndex = 0;
     public string currentState;
@@ -69,9 +71,26 @@ public class Chaser : MonoBehaviour
     IEnumerator FocusOnTarget()
     {
         float notAttackingTimer = 0f;
-        // make the enemy turn to face the player and pace slowly around the player
         notAttackingTimer += Time.deltaTime;
-        if (notAttackingTimer >= idleDuration)
+        // make the enemy turn to face the player and pace slowly around the player
+        while (currentState == "FocusOnTarget")
+        {
+            if (targetTransform == null)
+            {
+                StartCoroutine(SwitchState("Idle"));
+                yield break;
+            }
+
+            // Face the target
+            Vector3 directionToTarget = targetTransform.position - transform.position;
+            Quaternion lookRotation = Quaternion.LookRotation(directionToTarget.normalized);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
+
+            // Move around the target in a circle while randomly switching between circling clockwise and counterclockwise every 3 seconds
+            Vector3 offset = Quaternion.Euler(0, 90 * Mathf.Sign(Mathf.Sin(Time.time)), 0) * directionToTarget.normalized * directionToTarget.magnitude; // Calculate offset for circling
+            myAgent.SetDestination(targetTransform.position + offset);
+        }
+        if (notAttackingTimer >= focusDuration)
         {
             StartCoroutine(SwitchState("ChaseTarget"));
             yield break;
@@ -94,6 +113,40 @@ public class Chaser : MonoBehaviour
                 myAgent.SetDestination(targetTransform.position);
             }
             
+            yield return null;
+        }
+    }
+
+    IEnumerator Attack()
+    {
+        // Wait for attack animation to finish before switching to retreat
+        yield return new WaitForSeconds(1f); // Placeholder for attack duration
+        StartCoroutine(SwitchState("Retreat"));
+    }
+    
+    IEnumerator Retreat()
+    {
+        // Move backwards for a short duration, then switch back to focus on target
+        float retreatTimer = 0f;
+        while (currentState == "Retreat")
+        {
+            if (targetTransform == null)
+            {
+                StartCoroutine(SwitchState("Idle"));
+                yield break;
+            }
+
+            // Move backwards away from the target
+            Vector3 retreatDirection = (transform.position - targetTransform.position).normalized;
+            myAgent.Move(retreatDirection * myAgent.speed * Time.deltaTime);
+
+            retreatTimer += Time.deltaTime;
+            if (retreatTimer >= retreatDuration)
+            {
+                StartCoroutine(SwitchState("FocusOnTarget"));
+                yield break;
+            }
+
             yield return null;
         }
     }

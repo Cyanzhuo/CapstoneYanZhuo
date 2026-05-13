@@ -170,7 +170,13 @@ public class Attack : MonoBehaviour
             }
         }
 
-        ManageEnemyDetection();
+        if (currentAttackType != AttackType.None &&
+            currentAttackType != AttackType.GroundSlam &&
+            currentAttackType != AttackType.DashSlam &&
+            currentAttackType != AttackType.AerialPush) // Unless it's a continuous attack
+        {
+            ManageEnemyDetection();
+        }
     }
 
     #region Input Methods
