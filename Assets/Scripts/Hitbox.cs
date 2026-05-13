@@ -78,11 +78,6 @@ public class Hitbox : MonoBehaviour
 
                         enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
-                        // Only stop attack movement if you hit the chosen target
-                        if (attack.target == enemy.gameObject)
-                        {
-                            playerController.StopAttacking();
-                        }
 
                         break;
                         
@@ -123,10 +118,6 @@ public class Hitbox : MonoBehaviour
                         enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
                         playerController.pauseFastFall = false;
-                        if (attack.target == enemy.gameObject)
-                        {
-                            playerController.StopAttacking();
-                        }
 
                         break;
                         
@@ -163,10 +154,6 @@ public class Hitbox : MonoBehaviour
                         enemy.Knockback(launcherTotalKnockback.normalized, launcherTotalKnockback.magnitude, false);
 
                         ResetDashes();
-                        if (attack.target == enemy.gameObject)
-                        {
-                            playerController.StopAttacking();
-                        }
 
                         break;
                         
@@ -213,10 +200,6 @@ public class Hitbox : MonoBehaviour
                         ResetDashes();
                         ResetJumps();
                         playerController.pauseFastFall = false;
-                        if (attack.target == enemy.gameObject)
-                        {
-                            playerController.StopAttacking();
-                        }
 
                         break;
 
@@ -257,10 +240,7 @@ public class Hitbox : MonoBehaviour
                         ResetDashes();
                         ResetJumps();
                         playerController.pauseFastFall = false;
-                        if (attack.target == enemy.gameObject)
-                        {
-                            playerController.StopAttacking();
-                        }
+
                         break;
 
                     case Attack.AttackType.AerialPush:
@@ -297,10 +277,6 @@ public class Hitbox : MonoBehaviour
                         }
 
                         ResetDashes();
-                        if (attack.target == enemy.gameObject)
-                        {
-                            playerController.StopAttacking();
-                        }
 
                         break;
                 }

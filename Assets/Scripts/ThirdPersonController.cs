@@ -224,7 +224,7 @@ public class ThirdPersonController : MonoBehaviour
 
     private void OnJumpStarted()
     {
-        if (attack != null && attack.windingUpSlam)
+        if (attack != null && (attack.windingUpSlam || attack.currentAttackType == Attack.AttackType.AerialPush))
         {
             return;
         }
@@ -724,7 +724,7 @@ public class ThirdPersonController : MonoBehaviour
         if (rb.linearVelocity.y > 0) return false; // Only check when falling
         if (attack != null && attack.currentAttackType != Attack.AttackType.None)
         {
-            return false; // Don't allow ledge grab during a ground slam or meteor bounce attack
+            return false; // Don't allow ledge grab during an attack
         }
 
         // 1. Cast VERTICAL ray in front of the player to detect the top of a ledge

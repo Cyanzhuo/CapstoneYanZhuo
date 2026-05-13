@@ -522,6 +522,7 @@ MonoBehaviour:
   groundSphereRadius: 0.2
   healthText: {fileID: 64485221}
   attack: {fileID: 2298146794886278626}
+  playerController: {fileID: 0}
   currentState: 0
 --- !u!65 &112572288
 BoxCollider:
@@ -16372,6 +16373,7 @@ GameObject:
   - component: {fileID: 1565294510}
   - component: {fileID: 1565294509}
   - component: {fileID: 1565294508}
+  - component: {fileID: 1565294512}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -16473,6 +16475,38 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1565294512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1565294507}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.AI.Navigation::Unity.AI.Navigation.NavMeshSurface
+  m_SerializedVersion: 0
+  m_AgentTypeID: 0
+  m_CollectObjects: 0
+  m_Size: {x: 10, y: 10, z: 10}
+  m_Center: {x: 0, y: 2, z: 0}
+  m_LayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_UseGeometry: 0
+  m_DefaultArea: 0
+  m_GenerateLinks: 0
+  m_IgnoreNavMeshAgent: 1
+  m_IgnoreNavMeshObstacle: 1
+  m_OverrideTileSize: 0
+  m_TileSize: 256
+  m_OverrideVoxelSize: 0
+  m_VoxelSize: 0.16666667
+  m_MinRegionArea: 2
+  m_NavMeshData: {fileID: 23800000, guid: 1f52a549ba852c34b8f63e6adb857b04, type: 2}
+  m_BuildHeightMesh: 0
 --- !u!1 &1573547285
 GameObject:
   m_ObjectHideFlags: 0
@@ -21301,6 +21335,7 @@ MonoBehaviour:
   highJumpMultiplier: 1.25
   gravityMultiplier: 2
   lowGravityMultiplier: 0.5
+  slowFallSpeed: -1
   slamJumpTime: 0.2
   slamJumpTimer: 0
   jumpBufferTime: 0.15
@@ -21341,6 +21376,8 @@ MonoBehaviour:
   moveInput: {x: 0, y: 0}
   targetVelocity: {x: 0, y: 0, z: 0}
   availableJumps: 0
+  availableAerialPushes: 0
+  availableChargeAttackJumps: 0
   canCoyote: 0
   dashDirection: {x: 0, y: 0, z: 0}
   availableDashes: 0
@@ -21348,6 +21385,7 @@ MonoBehaviour:
   isCrouching: 0
   pauseFastFall: 0
   landedFromGroundSlam: 0
+  attackHasSetEndTime: 0
   groundCheckDistance: 0.4
 --- !u!54 &2298146794886278622
 Rigidbody:
@@ -21466,9 +21504,12 @@ MonoBehaviour:
   currentWeapon: {fileID: 11400000, guid: bc2cf3e9b702ffa41bbfd8437a6ff297, type: 2}
   comboResetTime: 0.5
   finisherCooldownTime: 0.5
+  hitboxLifetime: 0.1
   shortCooldownTime: 0.25
   defaultRange: 1
   dashRange: 3
+  enemyProximityThreshold: 0.6
+  proximityRadius: 0.1
   defaultForce: 5
   dashForce: 10
   launcherForce: 7.25
@@ -24733,6 +24774,7 @@ MonoBehaviour:
   groundSphereRadius: 0.2
   healthText: {fileID: 1687360750}
   attack: {fileID: 2298146794886278626}
+  playerController: {fileID: 0}
   currentState: 0
 --- !u!54 &4319943191827880018
 Rigidbody:

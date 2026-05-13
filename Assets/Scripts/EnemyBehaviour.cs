@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.AI;
 
 public class EnemyBehaviour : MonoBehaviour
 {
@@ -29,6 +30,8 @@ public class EnemyBehaviour : MonoBehaviour
 
     // Components cached for performance
     private Rigidbody rb;
+    NavMeshAgent myAgent;
+    Chaser chaser;
     [SerializeField] private Attack attack;
     [SerializeField] private ThirdPersonController playerController;
 
@@ -54,6 +57,8 @@ public class EnemyBehaviour : MonoBehaviour
     {
         // Cache references once at the very start
         rb = GetComponent<Rigidbody>();
+        myAgent = GetComponent<NavMeshAgent>();
+        chaser = GetComponent<Chaser>();
         if (attack == null)
         {
             attack = FindFirstObjectByType<Attack>();
@@ -154,8 +159,13 @@ public class EnemyBehaviour : MonoBehaviour
 
     public void Knockback(Vector3 direction, float force, bool shouldJuggle)
     {
+        if (myAgent != null && myAgent.enabled)
+        {
+            myAgent.enabled = false; // Disable NavMeshAgent to allow for physics-based knockback
+        }
         if (rb != null)
         {
+            rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             
             Vector3 knockback = direction.normalized * force;
@@ -169,17 +179,32 @@ public class EnemyBehaviour : MonoBehaviour
             
             rb.AddForce(knockback, ForceMode.VelocityChange);
         }
+        
+        if (chaser != null)
+        {
+            StartCoroutine(chaser.SwitchState("Knockback"));
+        }
     }
 
     public void Push(Vector3 direction, Vector3 verticalMotion, Vector3 knockback)
     {
+        if (myAgent != null && myAgent.enabled)
+        {
+            myAgent.enabled = false; // Disable NavMeshAgent to allow for physics-based knockback
+        }
         if (rb != null)
         {
+            rb.isKinematic = false;
             beingPushed = true;
             pauseFastFall = true;
             pushDirection = direction;
             softKnockback = knockback;
             rb.linearVelocity = new Vector3(direction.x, verticalMotion.y, direction.z);
+        }
+
+        if (chaser != null)
+        {
+            StartCoroutine(chaser.SwitchState("Knockback"));
         }
     }
 

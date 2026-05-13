@@ -5,31 +5,30 @@ using UnityEngine.AI;
 public class Chaser : MonoBehaviour
 {
     NavMeshAgent myAgent;
+    Rigidbody rb;
+    EnemyBehaviour enemyBehaviour;
 
-    [SerializeField]
-    Transform targetTransform;
-
-    [SerializeField]
-    Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
-
-    [SerializeField]
-    float idleDuration = 3f; // Time to stay in Idle state before patrolling
+    [SerializeField] Transform targetTransform;
+    [SerializeField] Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
+    [SerializeField] float idleDuration = 3f; // Time to stay in Idle state before patrolling
 
     int currentPatrolIndex = 0;
-
     public string currentState;
 
     void Awake()
     {
         myAgent = GetComponent<NavMeshAgent>();
+        rb = GetComponent<Rigidbody>();
+        enemyBehaviour = GetComponent<EnemyBehaviour>();
     }
 
     void Start()
     {
         StartCoroutine(SwitchState("Idle"));
+        rb.isKinematic = true; // Start with kinematic rigidbody for NavMeshAgent control
     }
 
-    IEnumerator SwitchState(string newState)
+    public IEnumerator SwitchState(string newState)
     {
         if (currentState == newState)
         {
@@ -126,6 +125,24 @@ public class Chaser : MonoBehaviour
             if (targetTransform != null)
             {
                 StartCoroutine(SwitchState("FocusOnTarget"));
+                yield break;
+            }
+
+            yield return null;
+        }
+    }
+
+    IEnumerator Knockback()
+    {
+        // Wait for linear velocity to be 0 and enemy to be grounded before switching back to idle
+        while (currentState == "Knockback")
+        {
+            if (rb.linearVelocity.magnitude < 0.1f && enemyBehaviour.IsGrounded)
+            {
+                // Re-enable NavMesh agent and rigidbody
+                myAgent.enabled = true;
+                rb.isKinematic = true;
+                StartCoroutine(SwitchState("Idle"));
                 yield break;
             }
 

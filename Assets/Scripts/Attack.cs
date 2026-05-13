@@ -18,11 +18,14 @@ public class Attack : MonoBehaviour
     [Header("Combo Settings")]
     public float comboResetTime = 1f;
     public float finisherCooldownTime = 1f;
+    [SerializeField] private float hitboxLifetime = 0.1f;
     [SerializeField] private float shortCooldownTime = 0.25f;
 
     [Header("Attack Physics")]
     public float defaultRange = 1f;
     public float dashRange = 2f;
+    public float enemyProximityThreshold = 0.3f; // How close the enemy needs to be to trigger StopAttacking()
+    public float proximityRadius = 0.1f; // Radius for the proximity check
     public float defaultForce = 5f;
     public float dashForce = 10f;
     [SerializeField] public float launcherForce = 7f;
@@ -67,7 +70,6 @@ public class Attack : MonoBehaviour
     private float cooldownTimer;
     private float attackDurationTimer;
     private bool hasPerformedChargedAttack;
-    [HideInInspector] public GameObject target;
     [HideInInspector] public bool isInCooldown;
     [HideInInspector] public bool countsAsDashSlam;
     [HideInInspector] public float appliedJuggleForce;
@@ -126,10 +128,10 @@ public class Attack : MonoBehaviour
         }
 
         // Placeholder, in the final game this should be handled by Animation Events
-        if (attackDurationTimer > 0)
+        if ((attackDurationTimer > 0) && (!playerController.isAttacking || playerController.attackHasSetEndTime)) // Only start counting down if you're not lunging (unless the attack has a set end time)
         {
             attackDurationTimer -= Time.deltaTime;
-            if (attackDurationTimer <= 0 && (!playerController.isAttacking || playerController.attackHasSetEndTime)) // Ensure the hitbox doesn't cut while the player is in the middle of a lunge (unless explicitly set to end)
+            if (attackDurationTimer <= 0)
             {
                 StopHitbox();
             }
@@ -167,14 +169,16 @@ public class Attack : MonoBehaviour
                 GroundSlam();
             }
         }
+
+        ManageEnemyDetection();
     }
 
     #region Input Methods
     private void OnAttackStarted()
     {
-        if (((currentAttackType == AttackType.GroundSlam ||
-            currentAttackType == AttackType.DashSlam) && !playerController.IsGrounded) ||
-            playerController.isAttacking)
+        if (currentAttackType != AttackType.None &&
+            currentAttackType != AttackType.Launcher &&
+            currentAttackType != AttackType.WeakPush) // Prevent interrupting your own attacks (except for the launcher and weak push)
         {
             return;
         }
@@ -205,8 +209,9 @@ public class Attack : MonoBehaviour
 
     private void OnAttackCanceled()
     {
-        if ((currentAttackType == AttackType.GroundSlam ||
-            currentAttackType == AttackType.DashSlam) && !playerController.IsGrounded)
+        if (currentAttackType != AttackType.None &&
+            currentAttackType != AttackType.Launcher &&
+            currentAttackType != AttackType.WeakPush)
         {
             return;
         }
@@ -255,7 +260,8 @@ public class Attack : MonoBehaviour
         if (!value.isPressed) return;
 
         if ((currentAttackType == AttackType.GroundSlam ||
-            currentAttackType == AttackType.DashSlam) && !playerController.IsGrounded)
+            currentAttackType == AttackType.DashSlam ||
+            currentAttackType == AttackType.AerialPush) && !playerController.IsGrounded)
         {
             return;
         }
@@ -285,11 +291,12 @@ public class Attack : MonoBehaviour
     {
         if (!value.isPressed) return;
 
-        if ((currentAttackType == AttackType.GroundSlam ||
+        if (((currentAttackType == AttackType.GroundSlam ||
             currentAttackType == AttackType.DashSlam ||
             currentAttackType == AttackType.Spike ||
             currentAttackType == AttackType.BoundSpike ||
-            currentAttackType == AttackType.AerialPush) && !playerController.IsGrounded)
+            currentAttackType == AttackType.AerialPush) && !playerController.IsGrounded) ||
+            playerController.isAttacking)
         {
             return;
         }
@@ -348,13 +355,13 @@ public class Attack : MonoBehaviour
         // 3. Hitbox Activation
         // In the final game, this should be called via an Animation Event
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = shortCooldownTime;
+        attackDurationTimer = hitboxLifetime;
 
         // 4. Lunge toward enemy (Magnetism)
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
         if (hits.Length > 0)
         {
-            target = GetBestTarget(hits);
+            GameObject target = GetBestTarget(hits);
             LungeAtTarget(target, force);
         }
         else
@@ -458,7 +465,7 @@ public class Attack : MonoBehaviour
         appliedJuggleForce = force;
         currentAttackType = AttackType.Launcher;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = shortCooldownTime;
+        attackDurationTimer = hitboxLifetime;
         // ... animation/effect logic ...
         
         if (shouldTriggerCooldown)
@@ -562,7 +569,7 @@ public class Attack : MonoBehaviour
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         currentAttackType = AttackType.Spike;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = shortCooldownTime;
+        attackDurationTimer = hitboxLifetime;
         // ... animation/effect logic ...
         
         if (countsAsDashSlam)
@@ -597,7 +604,7 @@ public class Attack : MonoBehaviour
         PlayEffect(attackEffect);
         currentAttackType = AttackType.BoundSpike;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = shortCooldownTime;
+        attackDurationTimer = hitboxLifetime;
         // ... animation/effect logic ...
         
         if (countsAsDashSlam)
@@ -640,14 +647,15 @@ public class Attack : MonoBehaviour
             Vector3 pushDirection = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
             playerController.SetAttackForce(pushDirection, bounceForce, false, true);
             playerController.availableAerialPushes --;
+
+            isInCooldown = true;
+            cooldownTimer = shortCooldownTime;
         }
         else
         {
             currentAttackType = AttackType.WeakPush;
+            ResetCombo();
         }
-
-        isInCooldown = true;
-        cooldownTimer = shortCooldownTime;
     }
 
     private void ExecuteChargeAttack()
@@ -696,10 +704,29 @@ public class Attack : MonoBehaviour
         chargeLevel = 0;
     }
 
+    // Used to stop attack lunge instead of weapon hitbox, since wind-up animation has the weapon to the side
+    private void ManageEnemyDetection()
+    {
+        Vector3 capsuleEnd = AttackOrigin + transform.forward * enemyProximityThreshold;
+        Collider[] hits = Physics.OverlapCapsule(AttackOrigin, capsuleEnd, proximityRadius, enemyLayer);
+        foreach (var hit in hits)
+        {
+            EnemyBehaviour enemy = hit.GetComponent<EnemyBehaviour>();
+            if (enemy != null && playerController.isAttacking)
+            {
+                playerController.StopAttacking();
+            }
+        }
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(AttackOrigin, defaultRange);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(AttackOrigin, dashRange);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(AttackOrigin + transform.forward * enemyProximityThreshold, proximityRadius);
     }
     #endregion
 }
