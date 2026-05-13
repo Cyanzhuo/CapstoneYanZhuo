@@ -10,13 +10,13 @@ using System;
 namespace majo.Core
 {
     /// <summary>
-    ///   <para>
-    ///     small enum-based finite state machine for runtime scripts
-    ///   </para>
+    ///     <para>
+    ///         small enum-based finite state machine for runtime scripts
+    ///     </para>
     /// </summary>
     /// <typeparam name="TState">enum type used for the state machine</typeparam>
     /// <example>
-    ///   <code>
+    ///     <code>
     ///   using marco;
     ///   using UnityEngine;
     ///  
@@ -30,9 +30,9 @@ namespace majo.Core
     ///   public sealed class EnemyController : MonoBehaviour
     ///   {
     ///       [SerializeField] private int health = 3;
-    ///
+    /// 
     ///       private FiniteStateMachine&lt;EnemyState&gt; state;
-    ///
+    /// 
     ///       private void Awake()
     ///       {
     ///           state = new FiniteStateMachine&lt;EnemyState&gt;(EnemyState.Idle);
@@ -67,6 +67,16 @@ namespace majo.Core
     public sealed class FiniteStateMachine<TState> where TState : Enum
     {
         /// <summary>
+        ///     creates a finite state machine with an initial state
+        /// </summary>
+        /// <param name="initialState">starting state</param>
+        public FiniteStateMachine(TState initialState)
+        {
+            State = initialState;
+            PreviousState = initialState;
+        }
+
+        /// <summary>
         ///     current state
         /// </summary>
         // ReSharper disable once MemberCanBePrivate.Global
@@ -82,16 +92,6 @@ namespace majo.Core
         ///     fired after the state changes. arguments are old state, then new state
         /// </summary>
         public event Action<TState, TState> OnStateChanged;
-
-        /// <summary>
-        ///     creates a finite state machine with an initial state
-        /// </summary>
-        /// <param name="initialState">starting state</param>
-        public FiniteStateMachine(TState initialState)
-        {
-            State = initialState;
-            PreviousState = initialState;
-        }
 
         /// <summary>
         ///     changes to a new state and notifies listeners

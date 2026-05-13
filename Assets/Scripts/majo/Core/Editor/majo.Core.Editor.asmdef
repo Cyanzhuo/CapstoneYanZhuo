@@ -1,8 +1,12 @@
 {
-  "name": "majo.Core",
+  "name": "majo.Core.Editor",
   "rootNamespace": "",
-  "references": [],
-  "includePlatforms": [],
+  "references": [
+    "GUID:5813795fbf9840f196dbd43aae234efd"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
