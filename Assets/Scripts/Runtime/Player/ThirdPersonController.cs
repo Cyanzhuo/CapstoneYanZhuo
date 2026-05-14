@@ -74,6 +74,7 @@ public class ThirdPersonController : MonoBehaviour
     [SerializeField] public float slideRotationFreezeDuration = 0.5f; // How long slide rotation is frozen
 
     [Header("Attack Settings")]
+    [SerializeField] float attackRotationSpeed = 60f;
     [HideInInspector] public Vector3 attackDirection;
     [HideInInspector] public float attackForce;
     [HideInInspector] public bool isAttacking;
@@ -709,8 +710,7 @@ public class ThirdPersonController : MonoBehaviour
             if (lookDir != Vector3.zero)
             {
                 Quaternion targetRot = Quaternion.LookRotation(lookDir);
-                // We use a higher multiplier (rotationSpeed * 2) for snappier targeting
-                rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * 2f * Time.fixedDeltaTime);
+                rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, attackRotationSpeed * Time.fixedDeltaTime);
             }
         }
     }

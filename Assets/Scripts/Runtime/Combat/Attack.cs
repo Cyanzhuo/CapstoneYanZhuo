@@ -25,7 +25,7 @@ public class Attack : MonoBehaviour
     public float defaultRange = 1f;
     public float dashRange = 2f;
     public float enemyProximityThreshold = 0.3f; // How close the enemy needs to be to trigger StopAttacking()
-    public float proximityRadius = 0.1f; // Radius for the proximity check
+    public Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f); // Size of the box for enemy detection during attacks
     public float defaultForce = 5f;
     public float dashForce = 10f;
     [SerializeField] public float launcherForce = 7f;
@@ -713,15 +713,11 @@ public class Attack : MonoBehaviour
     // Used to stop attack lunge instead of weapon hitbox, since wind-up animation has the weapon to the side
     private void ManageEnemyDetection()
     {
-        Vector3 capsuleEnd = AttackOrigin + transform.forward * enemyProximityThreshold;
-        Collider[] hits = Physics.OverlapCapsule(AttackOrigin, capsuleEnd, proximityRadius, enemyLayer);
-        foreach (var hit in hits)
+        Vector3 boxCenter = AttackOrigin + transform.forward * enemyProximityThreshold;
+        Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, enemyLayer);
+        if (hits.Length > 0 && playerController.isAttacking)
         {
-            EnemyBehaviour enemy = hit.GetComponent<EnemyBehaviour>();
-            if (enemy != null && playerController.isAttacking)
-            {
-                playerController.StopAttacking();
-            }
+            playerController.StopAttacking();
         }
     }
 
@@ -732,7 +728,7 @@ public class Attack : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(AttackOrigin, dashRange);
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(AttackOrigin + transform.forward * enemyProximityThreshold, proximityRadius);
+        Gizmos.DrawWireCube(AttackOrigin + transform.forward * enemyProximityThreshold, attackBoxSize);
     }
     #endregion
 }
