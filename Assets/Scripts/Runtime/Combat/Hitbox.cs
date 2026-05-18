@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class Hitbox : MonoBehaviour
 {
+    [SerializeField] private float shortHitStopDuration = 0.05f;
+    [SerializeField] private float longHitStopDuration = 0.1f;
     [SerializeField] private Attack attack; // Reference to the main brain
     [SerializeField] private ThirdPersonController playerController;
     [SerializeField] private Collider weaponCollider;
@@ -10,6 +12,7 @@ public class Hitbox : MonoBehaviour
     // Track enemies hit during this attack
     private HashSet<EnemyBehaviour> hitEnemies = new HashSet<EnemyBehaviour>();
     private bool hasBounced; // To prevent multiple bounces on spike attack
+    private Coroutine activeHitStop = null;
 
     void Start()
     {
@@ -43,6 +46,24 @@ public class Hitbox : MonoBehaviour
         playerController.availableAerialPushes = 1;
         playerController.availableChargeAttackJumps = 1;
     }
+    
+    System.Collections.IEnumerator HitStop(float duration)
+    {
+        Time.timeScale = 0.01f; // Almost pause the game
+        yield return new WaitForSecondsRealtime(duration); // Wait in real time
+        Time.timeScale = 1f;
+        activeHitStop = null;
+    }
+
+    void StopHitStop()
+    {
+        if (activeHitStop != null)
+        {
+            StopCoroutine(activeHitStop);
+            Time.timeScale = 1f;
+            activeHitStop = null;
+        }
+    }
 
     void OnTriggerEnter(Collider other)
     {
@@ -65,6 +86,8 @@ public class Hitbox : MonoBehaviour
                 var weaponData = attack.currentWeapon;
                 Rigidbody playerRB = playerController.GetComponent<Rigidbody>();
 
+                float hitStopDuration = shortHitStopDuration; // Default hitstop duration
+
                 switch (attack.currentAttackType)
                 {
                     case Attack.AttackType.Finisher:
@@ -78,6 +101,7 @@ public class Hitbox : MonoBehaviour
 
                         enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
+                        hitStopDuration = longHitStopDuration; // Longer hitstop for finisher
 
                         break;
                         
@@ -118,6 +142,7 @@ public class Hitbox : MonoBehaviour
                         enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
                         playerController.pauseFastFall = false;
+                        hitStopDuration = longHitStopDuration; // Longer hitstop for charged attack
 
                         break;
                         
@@ -136,6 +161,7 @@ public class Hitbox : MonoBehaviour
                             }
                             
                             enemy.TakeDamage(varDamage);
+                            hitStopDuration = longHitStopDuration; // Longer hitstop for charged launcher
                         }
                         else
                         {
@@ -240,6 +266,7 @@ public class Hitbox : MonoBehaviour
                         ResetDashes();
                         ResetJumps();
                         playerController.pauseFastFall = false;
+                        hitStopDuration = longHitStopDuration; // Longer hitstop for bound spike
 
                         break;
 
@@ -280,6 +307,9 @@ public class Hitbox : MonoBehaviour
 
                         break;
                 }
+                // Apply hitstop
+                StopHitStop(); // Stop any existing hitstop before starting a new one
+                activeHitStop = StartCoroutine(HitStop(hitStopDuration));
             }
         }
         else if (other.CompareTag("HazardWall") && !playerController.isGrabbingLedge && !hasBounced) // If player hits a hazard wall, bounce them up and away from it

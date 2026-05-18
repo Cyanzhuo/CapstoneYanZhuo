@@ -522,7 +522,6 @@ MonoBehaviour:
   groundSphereRadius: 0.2
   healthText: {fileID: 64485221}
   attack: {fileID: 2298146794886278626}
-  playerController: {fileID: 0}
   currentState: 0
 --- !u!65 &112572288
 BoxCollider:
@@ -21327,7 +21326,7 @@ MonoBehaviour:
   moveSpeed: 5
   rotationSpeed: 10
   sneakSpeed: 2.5
-  coyoteTime: 0.15
+  coyoteTime: 0.1
   jumpForce: 6
   shortJumpForce: 3
   enableDoubleJump: 1
@@ -21338,10 +21337,11 @@ MonoBehaviour:
   slowFallSpeed: -1
   slamJumpTime: 0.2
   slamJumpTimer: 0
-  jumpBufferTime: 0.15
+  jumpBufferTime: 0.1
   dashSpeed: 10
   dashDuration: 0.2
   dashCooldown: 0.5
+  dashBufferTime: 0.1
   enableAirDash: 1
   dashUpgradeObtained: 0
   maxSlopeAngle: 45
@@ -21359,7 +21359,7 @@ MonoBehaviour:
   slideRotationFreezeTimer: 0
   wallJumpArcDuration: 0.6
   slideRotationFreezeDuration: 0.3
-  attackRotationSpeed: 60
+  attackRotationSpeed: 20
   attackDirection: {x: 0, y: 0, z: 0}
   attackForce: 0
   isAttacking: 0
@@ -21505,12 +21505,14 @@ MonoBehaviour:
   currentWeapon: {fileID: 11400000, guid: bc2cf3e9b702ffa41bbfd8437a6ff297, type: 2}
   comboResetTime: 0.5
   finisherCooldownTime: 0.5
-  hitboxLifetime: 0.1
-  shortCooldownTime: 0.25
+  hitboxLifetime: 0.2
+  shortCooldownTime: 0.3
+  windUpDuration: 0.2
+  aerialPushDuration: 0.25
   defaultRange: 1
   dashRange: 3
   enemyProximityThreshold: 0.3
-  attackBoxSize: {x: 0.2, y: 1, z: 0.6}
+  attackBoxSize: {x: 0.4, y: 1, z: 0.6}
   defaultForce: 5
   dashForce: 10
   launcherForce: 7.25
@@ -21529,6 +21531,7 @@ MonoBehaviour:
   currentAttackType: 0
   isFinisher: 0
   isCharging: 0
+  attackBufferTime: 0.1
   attackEffect: {fileID: 739446766}
   finisherEffect: {fileID: 293385731}
   chargeEffect: {fileID: 463486130}
@@ -23534,7 +23537,6 @@ GameObject:
   - component: {fileID: 4319943191827880020}
   - component: {fileID: 4319943191827880023}
   - component: {fileID: 4319943191827880018}
-  - component: {fileID: 4319943191827880024}
   - component: {fileID: 4319943191827880017}
   - component: {fileID: 4319943191827880022}
   - component: {fileID: 4319943191827880021}
@@ -24776,7 +24778,6 @@ MonoBehaviour:
   groundSphereRadius: 0.2
   healthText: {fileID: 1687360750}
   attack: {fileID: 2298146794886278626}
-  playerController: {fileID: 0}
   currentState: 0
 --- !u!54 &4319943191827880018
 Rigidbody:
@@ -24868,6 +24869,7 @@ MonoBehaviour:
     m_Bits: 256
   playerProximityThreshold: 0.5
   centerPoint: {fileID: 187595881}
+  searchRadius: 5
   attackBoxSize: {x: 0.6, y: 1.4, z: 1}
   patrolPoints: []
   idleDuration: 3
@@ -24897,29 +24899,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1.24, z: 1}
   m_Center: {x: 0, y: 1.12, z: 0}
---- !u!136 &4319943191827880024
-CapsuleCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3510650319299461866}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 5
-  m_Height: 1
-  m_Direction: 1
-  m_Center: {x: 0, y: 0.87, z: 0}
 --- !u!1 &4325954270913288275
 GameObject:
   m_ObjectHideFlags: 0
@@ -25376,6 +25355,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 179d3e6074bfcae4fad13134e4424256, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  shortHitStopDuration: 0.05
+  longHitStopDuration: 0.1
   attack: {fileID: 2298146794886278626}
   playerController: {fileID: 2298146794886278621}
   weaponCollider: {fileID: 4590781371349774992}

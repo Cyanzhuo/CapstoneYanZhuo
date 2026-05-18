@@ -33,7 +33,6 @@ public class EnemyBehaviour : MonoBehaviour
     NavMeshAgent myAgent;
     Chaser chaser;
     [SerializeField] private Attack attack;
-    [SerializeField] private ThirdPersonController playerController;
 
     public enum EnemyState
     {
@@ -62,10 +61,6 @@ public class EnemyBehaviour : MonoBehaviour
         if (attack == null)
         {
             attack = FindFirstObjectByType<Attack>();
-        }
-        if (playerController == null)
-        {
-            playerController = FindFirstObjectByType<ThirdPersonController>();
         }
     }
 
@@ -115,7 +110,7 @@ public class EnemyBehaviour : MonoBehaviour
         }
         if (beingPushed)
         {
-            if (!playerController.isAttacking)
+            if (attack != null && attack.currentAttackType != Attack.AttackType.AerialPush)
             {
                 Knockback(softKnockback.normalized, softKnockback.magnitude, false);
                 pauseFastFall = false;

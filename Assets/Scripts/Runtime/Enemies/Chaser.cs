@@ -12,6 +12,7 @@ public class Chaser : MonoBehaviour
     [SerializeField] LayerMask playerLayer;
     [SerializeField] float playerProximityThreshold = 1f;
     [SerializeField] Transform centerPoint;
+    [SerializeField] float searchRadius = 5f;
     [SerializeField] Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f);
     [SerializeField] Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
     [SerializeField] float idleDuration = 3f; // Time to stay in Idle state before patrolling
@@ -42,6 +43,15 @@ public class Chaser : MonoBehaviour
 
     void Update()
     {
+        Collider[] player = Physics.OverlapSphere(centerPoint.position, searchRadius, playerLayer);
+        if (player.Length > 0)
+        {
+            targetTransform = player[0].transform;
+        }
+         else
+        {
+            targetTransform = null;
+        }
         Vector3 boxCenter = centerPoint.position + transform.forward * playerProximityThreshold;
         Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, playerLayer);
         if (hits.Length > 0 && currentState == State.ChaseTarget)
@@ -125,6 +135,7 @@ public class Chaser : MonoBehaviour
 
             // Face the target
             Vector3 directionToTarget = targetTransform.position - transform.position;
+            directionToTarget.y = 0; // Keep only horizontal direction
             Quaternion lookRotation = Quaternion.LookRotation(directionToTarget.normalized);
             transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
 
@@ -251,23 +262,11 @@ public class Chaser : MonoBehaviour
         }
     }
 
-    void OnTriggerEnter(Collider other)
-    {
-        // If the chaser 'sees' the player, set the target to the player
-        if (other.gameObject.CompareTag("Player"))
-            targetTransform = other.transform;
-    }
-
-    void OnTriggerExit(Collider other)
-    {
-        // If the player leaves the chaser's trigger, set the target to null
-        if (other.gameObject.CompareTag("Player"))
-            targetTransform = null;
-    }
-
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.blue;
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(centerPoint.position, searchRadius);
+        Gizmos.color = Color.red;
         Gizmos.DrawWireCube(centerPoint.position + transform.forward * playerProximityThreshold, attackBoxSize);
     }
 }

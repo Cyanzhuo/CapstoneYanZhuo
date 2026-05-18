@@ -20,6 +20,8 @@ public class Attack : MonoBehaviour
     public float finisherCooldownTime = 1f;
     [SerializeField] private float hitboxLifetime = 0.1f;
     [SerializeField] private float shortCooldownTime = 0.25f;
+    [SerializeField] private float windUpDuration = 0.2f;
+    [SerializeField] private float aerialPushDuration = 0.25f;
 
     [Header("Attack Physics")]
     public float defaultRange = 1f;
@@ -53,7 +55,14 @@ public class Attack : MonoBehaviour
     [HideInInspector] public AttackType currentAttackType;
     [HideInInspector] public bool isFinisher;
     [HideInInspector] public bool isCharging;
-    
+
+    [Header("Input Buffering")]
+    [SerializeField] private float attackBufferTime = 0.15f;
+    private float attackBufferTimer = 0f;
+    private bool attackBuffered = false;
+    private bool holdBuffered = false;
+    private float holdBufferTimer = 0f;
+
     [Header("Effects")]
     public ParticleSystem attackEffect;
     public ParticleSystem finisherEffect;
@@ -75,8 +84,8 @@ public class Attack : MonoBehaviour
     [HideInInspector] public float appliedJuggleForce;
     [HideInInspector] public bool windingUpSlam;
     private float windUpTimer;
-    private float windUpDuration = 0.2f;
     public Coroutine groundSlamLandingCoroutine;
+    private Vector3 directionToEnemy;
 
     // Helper property for chest-level origin
     private Vector3 AttackOrigin => transform.position + Vector3.up * 0.6f;
@@ -112,6 +121,34 @@ public class Attack : MonoBehaviour
 
     void Update()
     {
+        if (attackBuffered)
+        {
+            attackBufferTimer -= Time.deltaTime;
+            if (attackBufferTimer <= 0)
+            {
+                attackBuffered = false;
+            }
+            else if (currentAttackType == AttackType.None && !isInCooldown) // Only allow buffered input if we're not in the middle of another attack
+            {
+                ExecuteAttackInput();
+                attackBuffered = false;
+            }
+        }
+
+        if (holdBuffered)
+        {
+            holdBufferTimer -= Time.deltaTime;
+            if (holdBufferTimer <= 0)
+            {
+                holdBuffered = false;
+            }
+            else if (currentAttackType == AttackType.None && !isInCooldown) // Only allow buffered input if we're not in the middle of another attack
+            {
+                ExecuteHoldInput();
+                holdBuffered = false;
+            }
+        }
+
         // Reset combo if player idles too long
         if (attackStage > 0 && Time.time > lastAttackTime + comboResetTime && !isInCooldown)
         {
@@ -156,11 +193,6 @@ public class Attack : MonoBehaviour
             }
         }
 
-        if (controls.Player.Attack.ReadValue<float>() <= 0)
-        {
-            attackPressTime = 0;
-        }
-
         if (windingUpSlam)
         {
             windUpTimer -= Time.deltaTime;
@@ -182,82 +214,83 @@ public class Attack : MonoBehaviour
     #region Input Methods
     private void OnAttackStarted()
     {
-        if (currentAttackType != AttackType.None &&
-            currentAttackType != AttackType.Launcher &&
-            currentAttackType != AttackType.WeakPush) // Prevent interrupting your own attacks (except for the launcher and weak push)
+        if ((currentAttackType != AttackType.None && // Prevent interrupting your own attacks...
+            currentAttackType != AttackType.WeakPush) || // ...except for the weak push
+            (isInCooldown && !windingUpSlam)) // Buffer input if we're in cooldown, but allow it if we're winding up a slam since that's a different state
         {
+            attackBuffered = true;
+            attackBufferTimer = attackBufferTime;
             return;
         }
-        else
-        {
-            if (isInCooldown && !windingUpSlam) return;
-            
-            attackPressTime = Time.time;
-            chargeLevel = 0; // Reset charge level
 
-            if (windingUpSlam)
+        ExecuteAttackInput();
+    }
+
+    private void ExecuteAttackInput()
+    {            
+        attackPressTime = Time.time;
+        chargeLevel = 0; // Reset charge level
+
+        if (windingUpSlam)
+        {
+            Spike();
+        }
+        else if (!isInCooldown)
+        {
+            if (playerController.isCrouching && playerController.IsGrounded) // Crouching on the ground
             {
-                Spike();
+                ProcessLauncher(launcherForce); // Perform launcher immediately
             }
-            else if (!isInCooldown)
+            else
             {
-                if (playerController.isCrouching && playerController.IsGrounded) // Crouching on the ground
-                {
-                    ProcessLauncher(launcherForce); // Perform launcher immediately
-                }
-                else
-                {
-                    ProcessCombo(); // Swing immediately
-                }
+                ProcessCombo(); // Swing immediately
             }
         }
     }
 
     private void OnAttackCanceled()
     {
-        if (currentAttackType != AttackType.None &&
-            currentAttackType != AttackType.Launcher &&
-            currentAttackType != AttackType.WeakPush)
-        {
-            return;
-        }
-
-        // If we are currently in cooldown, ignore the release entirely
-        if (isInCooldown && !windingUpSlam)
-        {
-            attackPressTime = 0; 
-            return;
-        }
-
         // If attackPressTime is 0, it means the button was pressed during a cooldown or blocked state. Stop here.
         if (attackPressTime <= 0) return;
-        
+
         float holdDuration = Time.time - attackPressTime;
+        attackPressTime = 0; // Hold duration calculated, can now safely reset the timer
 
         // Only trigger if we held longer than the threshold
         if (holdDuration >= chargeThreshold)
         {
-            isCharging = true;
-
-            if (windingUpSlam)
+            if ((currentAttackType != AttackType.None &&
+                currentAttackType != AttackType.WeakPush) ||
+                (isInCooldown && !windingUpSlam))
             {
-                BoundSpike();
+                holdBuffered = true;
+                holdBufferTimer = attackBufferTime;
+                return;
             }
-            else if (!isInCooldown)
+            ExecuteHoldInput();
+        }
+    }
+
+    private void ExecuteHoldInput()
+    {
+        isCharging = true;
+
+        if (windingUpSlam)
+        {
+            BoundSpike();
+        }
+        else if (!isInCooldown)
+        {
+            if (playerController.isCrouching && playerController.IsGrounded) // Crouching on the ground
             {
-                if (playerController.isCrouching && playerController.IsGrounded) // Crouching on the ground
-                {
-                    ProcessLauncher(dashForce); // Perform charged launcher
-                }
-                else
-                {
-                    ExecuteChargeAttack();
-                }
+                ProcessLauncher(dashForce); // Perform charged launcher
+            }
+            else
+            {
+                ExecuteChargeAttack();
             }
         }
         
-        // Reset timer to prevent double-triggering logic
-        attackPressTime = 0;
         hasPerformedChargedAttack = true;
     }
 
@@ -369,6 +402,7 @@ public class Attack : MonoBehaviour
         {
             GameObject target = GetBestTarget(hits);
             LungeAtTarget(target, force);
+            playerController.LockOnTarget(target);
         }
         else
         {
@@ -430,9 +464,9 @@ public class Attack : MonoBehaviour
         Transform centrePoint = target.transform.Find("EnemyCentrePoint");
         if (!centrePoint) return;
 
-        Vector3 direction = (centrePoint.position - AttackOrigin).normalized;
+        directionToEnemy = (centrePoint.position - AttackOrigin).normalized;
         
-        playerController.SetAttackForce(direction, force, true);
+        playerController.SetAttackForce(directionToEnemy, force, true);
     }
     #endregion
 
@@ -442,15 +476,20 @@ public class Attack : MonoBehaviour
         Launcher(force, true);
 
         bool countsAsDashAttack = playerController.WasRecentlyDashing(0.1f);
-        if (countsAsDashAttack)
+        float range = countsAsDashAttack ? dashRange : defaultRange;
+        Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        if (hits.Length > 0)
         {
-            Collider[] hits = Physics.OverlapSphere(AttackOrigin, dashRange, enemyLayer);
-            if (hits.Length > 0)
+            GameObject target = GetBestTarget(hits);
+            playerController.LockOnTarget(target);
+            if (countsAsDashAttack)
             {
-                GameObject target = GetBestTarget(hits);
                 LungeAtTarget(target, dashForce);
             }
-            else
+        }
+        else
+        {
+            if (countsAsDashAttack)
             {
                 // 1. Determine the direction of the dash attack
                 // We use dashDirection if it exists, otherwise fall back to player forward
@@ -564,7 +603,8 @@ public class Attack : MonoBehaviour
         }
 
         StopHitbox();
-        playerController.freezeRotation = false;
+        isInCooldown = true;
+        cooldownTimer = shortCooldownTime;
         playerController.landedFromGroundSlam = true;
         playerController.slamJumpTimer = playerController.slamJumpTime;
     }
@@ -578,15 +618,20 @@ public class Attack : MonoBehaviour
         attackDurationTimer = hitboxLifetime;
         // ... animation/effect logic ...
         
-        if (countsAsDashSlam)
+        float range = countsAsDashSlam ? dashRange : defaultRange;
+        Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        if (hits.Length > 0)
         {
-            Collider[] hits = Physics.OverlapSphere(AttackOrigin, dashRange, enemyLayer);
-            if (hits.Length > 0)
+            GameObject target = GetBestTarget(hits);
+            playerController.LockOnTarget(target);
+            if (countsAsDashSlam)
             {
-                GameObject target = GetBestTarget(hits);
                 LungeAtTarget(target, dashForce);
             }
-            else
+        }
+        else
+        {
+            if (countsAsDashSlam)
             {
                 // 1. Determine the direction of the dash attack
                 // We use dashDirection if it exists, otherwise fall back to player forward
@@ -613,15 +658,20 @@ public class Attack : MonoBehaviour
         attackDurationTimer = hitboxLifetime;
         // ... animation/effect logic ...
         
-        if (countsAsDashSlam)
+        float range = countsAsDashSlam ? dashRange : defaultRange;
+        Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        if (hits.Length > 0)
         {
-            Collider[] hits = Physics.OverlapSphere(AttackOrigin, dashRange, enemyLayer);
-            if (hits.Length > 0)
+            GameObject target = GetBestTarget(hits);
+            playerController.LockOnTarget(target);
+            if (countsAsDashSlam)
             {
-                GameObject target = GetBestTarget(hits);
                 LungeAtTarget(target, dashForce);
             }
-            else
+        }
+        else
+        {
+            if (countsAsDashSlam)
             {
                 // 1. Determine the direction of the dash attack
                 // We use dashDirection if it exists, otherwise fall back to player forward
@@ -644,7 +694,7 @@ public class Attack : MonoBehaviour
         windingUpSlam = false;
         PlayEffect(attackEffect);
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = shortCooldownTime;
+        attackDurationTimer = aerialPushDuration;
         if (playerController.availableAerialPushes > 0)
         {
             currentAttackType = AttackType.AerialPush;
@@ -701,6 +751,7 @@ public class Attack : MonoBehaviour
         isFinisher = false;
         weaponHitbox.DeactivateHitbox();
         playerController.StopAttacking();
+        playerController.UnlockTarget();
         playerController.pauseFastFall = shouldPauseFastFall;
     }
 
@@ -714,10 +765,23 @@ public class Attack : MonoBehaviour
     private void ManageEnemyDetection()
     {
         Vector3 boxCenter = AttackOrigin + transform.forward * enemyProximityThreshold;
-        Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, enemyLayer);
+        // Make the box face the enemy
+        Vector3 direction = directionToEnemy != Vector3.zero ? directionToEnemy : transform.forward; // Fallback to forward if directionToEnemy is zero
+        direction.y = 0; // Ignore vertical direction for box rotation
+        Quaternion boxRotation = Quaternion.LookRotation(direction, Vector3.up);
+        Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, boxRotation, enemyLayer);
         if (hits.Length > 0 && playerController.isAttacking)
         {
             playerController.StopAttacking();
+            directionToEnemy = Vector3.zero; // Reset direction after successfully hitting an enemy
+        }
+
+        // If you miss, wait for there to be no enemies in attack range before stopping the lunge
+        Collider[] enemiesInRange = Physics.OverlapSphere(AttackOrigin, dashRange, enemyLayer);
+        if (enemiesInRange.Length == 0 && playerController.isAttacking)
+        {
+            playerController.StopAttacking();
+            directionToEnemy = Vector3.zero;
         }
     }
 

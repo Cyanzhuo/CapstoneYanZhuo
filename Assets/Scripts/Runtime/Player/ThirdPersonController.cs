@@ -46,8 +46,10 @@ public class ThirdPersonController : MonoBehaviour
     public float dashSpeed = 10f;
     public float dashDuration = 0.1f;
     public float dashCooldown = 1f;
+    public float dashBufferTime = 0.1f;
     public bool enableAirDash = true;
     public bool dashUpgradeObtained = false;
+    private bool dashBuffered = false;
 
     [Header("Slope Handling")]
     [SerializeField] private float maxSlopeAngle = 45f;
@@ -79,6 +81,7 @@ public class ThirdPersonController : MonoBehaviour
     [HideInInspector] public float attackForce;
     [HideInInspector] public bool isAttacking;
     private bool attackShouldModifyYaxis;
+    private GameObject lockOnTarget;
     [HideInInspector] public bool freezeRotation;
 
     [Header("Ledge Grab")]
@@ -180,6 +183,18 @@ public class ThirdPersonController : MonoBehaviour
     public void StopAttacking()
     {
         isAttacking = false;
+    }
+
+    public void LockOnTarget(GameObject target)
+    {
+        lockOnTarget = target;
+        freezeRotation = true;
+    }
+
+    public void UnlockTarget()
+    {
+        lockOnTarget = null;
+        freezeRotation = false;
     }
 
     void Start()
@@ -300,11 +315,18 @@ public class ThirdPersonController : MonoBehaviour
     
     public void OnDash(InputValue value)
     {
-        if (value.isPressed && !isDashing && dashCooldownTimer <= 0)
+        if (value.isPressed && !isDashing)
         {
             if (IsGrounded || (enableAirDash && availableDashes > 0)) 
             {
-                StartDash();
+                if (dashCooldownTimer <= 0)
+                {
+                    StartDash();
+                }
+                else if (dashCooldownTimer <= dashBufferTime)
+                {
+                    dashBuffered = true;
+                }
             }
         }
     }
@@ -346,6 +368,8 @@ public class ThirdPersonController : MonoBehaviour
             return;
         }
 
+        ApplyRotationDuringAttack();
+
         if (isAttacking)
         {
             ApplyAttackMovement();
@@ -353,7 +377,7 @@ public class ThirdPersonController : MonoBehaviour
         }
 
         ApplyMovement();
-        if (!freezeRotation) ApplyRotation();
+        ApplyRotation();
         UpdateAnimation();
     }
 
@@ -437,14 +461,32 @@ public class ThirdPersonController : MonoBehaviour
         Vector3 moveDir = GetCameraRelativeDirection(moveInput);
         if (moveDir != Vector3.zero)
         {
-            Quaternion targetRot = Quaternion.LookRotation(moveDir);
-            rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
+            if (!freezeRotation)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(moveDir);
+                rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
+            }
             if (!isBraking && !IsSlideRotationFrozen) // Freeze slide rotation during wall jump arc
             {
                 // Gradually align slide velocity with input direction
                 Vector3 targetVelocity = moveDir.normalized * slideVelocity.magnitude;
                 slideVelocity = Vector3.RotateTowards(slideVelocity, targetVelocity, 
                     flatGroundTurnSpeed * Time.fixedDeltaTime, 0f);
+            }
+        }
+    }
+
+    private void ApplyRotationDuringAttack()
+    {
+        if (lockOnTarget != null)
+        {
+            Vector3 directionToTarget = lockOnTarget.transform.position - transform.position;
+            // We only want to rotate on the Y axis
+            directionToTarget.y = 0;
+            if (directionToTarget != Vector3.zero)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(directionToTarget);
+                rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, attackRotationSpeed * Time.fixedDeltaTime);
             }
         }
     }
@@ -634,6 +676,10 @@ public class ThirdPersonController : MonoBehaviour
             }
         }
         freezeRotation = false;
+        if (lockOnTarget != null)
+        {
+            UnlockTarget();
+        }
 
         if (!IsGrounded)
         {
@@ -680,6 +726,10 @@ public class ThirdPersonController : MonoBehaviour
         // Apply combined velocity
         rb.linearVelocity = dashVelocity;
 
+        // Rotate towards dash direction
+        Quaternion dashRot = Quaternion.LookRotation(dashDirection);
+        rb.rotation = Quaternion.Slerp(rb.rotation, dashRot, attackRotationSpeed * Time.fixedDeltaTime);
+
         dashTimer -= Time.fixedDeltaTime;
         if (dashTimer <= 0) 
         {
@@ -701,18 +751,6 @@ public class ThirdPersonController : MonoBehaviour
         
         // Apply combined velocity
         rb.linearVelocity = attackVelocity;
-
-        // Rotation logic: Face the attack direction
-        if (attackDirection != Vector3.zero)
-        {
-            // We only want to rotate on the Y axis
-            Vector3 lookDir = new Vector3(attackDirection.x, 0, attackDirection.z);
-            if (lookDir != Vector3.zero)
-            {
-                Quaternion targetRot = Quaternion.LookRotation(lookDir);
-                rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, attackRotationSpeed * Time.fixedDeltaTime);
-            }
-        }
     }
     #endregion
     
@@ -765,7 +803,7 @@ public class ThirdPersonController : MonoBehaviour
         transform.position = grabPosition;
         
         // Face the wall (opposite of where the wall is facing)
-        transform.rotation = Quaternion.LookRotation(-ledgeNormal);
+        rb.rotation = Quaternion.LookRotation(-ledgeNormal);
 
         // Reset aerial actions
         availableJumps = 1;
@@ -829,6 +867,11 @@ public class ThirdPersonController : MonoBehaviour
     private void HandleTimers()
     {
         if (dashCooldownTimer > 0) dashCooldownTimer -= Time.deltaTime;
+        if (dashBuffered && dashCooldownTimer <= 0)
+        {
+            StartDash();
+            dashBuffered = false;
+        }
         
         if (jumpBuffered)
         {
