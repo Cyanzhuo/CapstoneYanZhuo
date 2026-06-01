@@ -173,6 +173,7 @@ public class ThirdPersonController : MonoBehaviour
 
         isAttacking = true;
         isDashing = false;
+        brakeMultiplier = 1f; // Reset brake multiplier when starting an attack
 
         // Redirect slide velocity to match attack direction
         SetSlideVelocity(direction * slideVelocity.magnitude);
@@ -580,6 +581,7 @@ public class ThirdPersonController : MonoBehaviour
     {
         exitingSlope = true;
         canCoyote = false;
+        brakeMultiplier = 1f; // Reset brake multiplier when jumping
         if (attack && attack.isInCooldown && !isCrouching && !attack.windingUpSlam) attack.ResetCombo();
 
         // --- DASH JUMP MOMENTUM TRANSFER ---
@@ -693,6 +695,7 @@ public class ThirdPersonController : MonoBehaviour
         pauseFastFall = true;
         dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
+        brakeMultiplier = 1f; // Reset brake multiplier when starting a dash
 
         Vector3 moveDir = GetCameraRelativeDirection(moveInput);
         dashDirection = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
