@@ -13,6 +13,10 @@ public class EnemyBehaviour : MonoBehaviour
     bool beingPushed;
     Vector3 pushDirection;
     Vector3 softKnockback;
+
+    [Header("Payback Gauge")]
+    [SerializeField] private float maxPayback = 50f;
+    [SerializeField] private float currentPayback = 0f;
     
     [Header("Gravity")]
     float gravityMultiplier = 2f;
@@ -39,6 +43,9 @@ public class EnemyBehaviour : MonoBehaviour
         Normal, Hitstun, Knockback, Spiked, Rebound
     }
     [HideInInspector] public EnemyState currentState = EnemyState.Normal;
+    [SerializeField] private float counterChance = 0.5f;
+    private bool counterTriggered = false;
+    private bool enraged = false;
 
     /// <summary>
     /// Checks if the enemy is currently touching the floor.
@@ -139,9 +146,21 @@ public class EnemyBehaviour : MonoBehaviour
     }
 
     #region Combat Logic
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, int payback = 0, bool shouldTriggerCounter = false)
     {
+        if (enraged)
+        {
+            amount /= 2;
+            float randomValue = Random.value; // 0 to 1
+            if (randomValue < counterChance && shouldTriggerCounter)
+            {
+                TriggerCounter();
+                return;
+            }
+        }
         health -= amount;
+        currentPayback = Mathf.Clamp(currentPayback + payback, 0, maxPayback);
+        enraged = currentPayback == maxPayback;
 
         if (health <= 0)
         {
@@ -151,9 +170,24 @@ public class EnemyBehaviour : MonoBehaviour
 
         UpdateHealthText();
     }
+    
+    void TriggerCounter()
+    {
+        counterTriggered = true;
+        if (chaser != null)
+        {
+            StartCoroutine(chaser.SwitchState(Chaser.State.Attack));
+        }
+    }
 
     public void Knockback(Vector3 direction, float force, bool shouldJuggle)
     {
+        if (counterTriggered)
+        {
+            counterTriggered = false;
+            return;
+        }
+        
         if (myAgent != null && myAgent.enabled)
         {
             myAgent.enabled = false; // Disable NavMeshAgent to allow for physics-based knockback
@@ -219,7 +253,7 @@ public class EnemyBehaviour : MonoBehaviour
             TakeDamage(collisionDamage);
             currentState = EnemyState.Normal;
         }
-        else if (collision.gameObject.CompareTag("HazardWall"))
+        else if (collision.gameObject.CompareTag("Hazard"))
         {
             Die();
         }

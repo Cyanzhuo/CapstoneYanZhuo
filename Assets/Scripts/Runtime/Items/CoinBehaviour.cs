@@ -13,11 +13,6 @@ public class CoinBehaviour : MonoBehaviour
 {
     [SerializeField]
     AudioClip coinAudioClip; // Reference to the AudioClip component for playing sounds
-    MeshRenderer meshRenderer; // Reference to the MeshRenderer component for highlighting
-    [SerializeField]
-    Material originalMaterial; // Store the original material for the coin
-    [SerializeField]
-    Material highlightMaterial; // Material used for highlighting the coin
     // Coin value that will be added to the player's score
     [SerializeField]
     public int coinValue = 1;
@@ -30,31 +25,6 @@ public class CoinBehaviour : MonoBehaviour
     /// This allows the coin to modify the player's score
     /// The method is public so it can be accessed from other scripts
     /// </summary>
-
-    public void Start()
-    {
-        // Get the MeshRenderer component attached to this GameObject
-        meshRenderer = GetComponent<MeshRenderer>();
-        // Store the original color of the coin for later use
-        originalMaterial = meshRenderer.material;
-    }
-
-    public void Highlight()
-    {
-        /// <summary>
-        /// Change the color of the coin to highlight it
-        /// This is done by setting the material color to the highlight color
-        /// </summary>
-        meshRenderer.material = highlightMaterial;
-    }
-    public void Unhighlight()
-    {
-        /// <summary>
-        /// Reset the color of the coin to its original color
-        /// This is done by setting the material color back to the original color
-        /// </summary>
-        meshRenderer.material = originalMaterial;
-    }
 
     public void Collect(PlayerBehaviour player)
     {

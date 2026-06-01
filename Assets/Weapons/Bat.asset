@@ -17,3 +17,6 @@ MonoBehaviour:
   finisherDamage: 15
   chargeDamage: 20
   maxComboStage: 4
+  normalPayback: 10
+  finisherPayback: -10
+  chargePayback: -20

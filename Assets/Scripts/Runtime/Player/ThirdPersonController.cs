@@ -54,26 +54,20 @@ public class ThirdPersonController : MonoBehaviour
     [Header("Slope Handling")]
     [SerializeField] private float maxSlopeAngle = 45f;
     [SerializeField] private float slopeDownForce = 20f;
+    private float upSlopeResistance = 0f;
+    private float angleBasedInputReduction;
     private RaycastHit slopeHit;
     private bool exitingSlope;
 
     [Header("Crouch Settings")]
     [SerializeField] public float maxSlopeSlideSpeed = 20f; // Speed when sliding down slopes
+    [SerializeField] private float maxSlopeSlideAcceleration = 10f; // How quickly you reach max slide speed
+    [SerializeField] private float maxSlopeAngleForSlide = 40f; // Maximum angle for sliding to occur
     [SerializeField] private float friction = 2f; // How quickly you slow down on flat ground
     [SerializeField] private float slideFriction = 2.5f; // How quickly you slow down when sliding
     [SerializeField] private float airFriction = 0.5f; // How quickly you slow down in mid-air
     [SerializeField] private float flatGroundTurnSpeed = 4f; // How quickly slide speed builds
-
     [HideInInspector] public Vector3 slideVelocity; // Track slide momentum
-
-    [Header("Wall Jump Tuning")]
-    [HideInInspector] public bool IsInWallJumpArc = false;
-    [HideInInspector] public bool IsSlideRotationFrozen = false;
-    [HideInInspector] public Vector3 lastWallNormal;
-    [HideInInspector] public float wallJumpArcTimer = 0f;
-    [HideInInspector] public float slideRotationFreezeTimer = 0f;
-    [SerializeField] public float wallJumpArcDuration = 0.6f; // How long input is restricted
-    [SerializeField] public float slideRotationFreezeDuration = 0.5f; // How long slide rotation is frozen
 
     [Header("Attack Settings")]
     [SerializeField] float attackRotationSpeed = 60f;
@@ -98,10 +92,12 @@ public class ThirdPersonController : MonoBehaviour
     [Header("Slide Braking")]
     [SerializeField] private float brakeDeceleration = 10f; // How fast you slow down when braking
     [SerializeField] private float brakeInputThreshold = 0.8f; // How far opposite you need to flick
+    private float brakeMultiplier = 1f;
 
     // Component References
     private Rigidbody rb;
     private Attack attack;
+    private WallRun wallRun;
     private Animator animator;
     private Camera mainCamera;
 
@@ -118,6 +114,8 @@ public class ThirdPersonController : MonoBehaviour
     private float dashCooldownTimer;
     [HideInInspector] public Vector3 dashDirection;
     private float dashEndTime;
+    private float dashCancelTime;
+    private bool dashCancelled;
     [HideInInspector] public int availableDashes;
     [HideInInspector] public bool isDashing;
     [HideInInspector] public bool isCrouching;
@@ -125,7 +123,7 @@ public class ThirdPersonController : MonoBehaviour
     [HideInInspector] public bool landedFromGroundSlam;
     [HideInInspector] public bool attackHasSetEndTime;
     bool isBraking = false;
-    public bool WasRecentlyDashing(float leniency) => isDashing || (Time.time - dashEndTime < leniency);
+    public bool WasRecentlyDashing(float leniency) => isDashing || (Time.time - dashEndTime < leniency) || (dashCancelled && (Time.time - dashCancelTime < dashDuration));
 
     // Input Flags (The "Intent")
     private bool jumpRequested;
@@ -182,7 +180,7 @@ public class ThirdPersonController : MonoBehaviour
 
     public void StopAttacking()
     {
-        isAttacking = false;
+        if (isAttacking) isAttacking = false;
     }
 
     public void LockOnTarget(GameObject target)
@@ -201,6 +199,7 @@ public class ThirdPersonController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         attack = GetComponent<Attack>();
+        wallRun = GetComponent<WallRun>();
         animator = GetComponent<Animator>();
         mainCamera = Camera.main;
         lastGroundedTime = -coyoteTime;
@@ -290,7 +289,6 @@ public class ThirdPersonController : MonoBehaviour
         
         if (IsGrounded)
         {
-            animator.SetBool("IsCrouching", true);
             // Set slide velocity to moveInput magnitude
             if (moveInput.magnitude > 0.1f && slideVelocity.magnitude < GetCameraRelativeDirection(moveInput).magnitude * moveSpeed)
             {
@@ -310,7 +308,6 @@ public class ThirdPersonController : MonoBehaviour
     private void OnCrouchCanceled()
     {
         isCrouching = false;
-        animator.SetBool("IsCrouching", false);
     }
     
     public void OnDash(InputValue value)
@@ -385,37 +382,22 @@ public class ThirdPersonController : MonoBehaviour
     private void ApplyMovement()
     {
         Vector3 worldMoveDir = GetCameraRelativeDirection(moveInput);
+        if (!isBraking) brakeMultiplier = Mathf.MoveTowards(brakeMultiplier, 1f, moveSpeed * Time.fixedDeltaTime); // Gradually reset brake multiplier when not braking
         
-        // 1. Filter out input that pushes back into the wall
-        if (IsInWallJumpArc)
-        {
-            // Check if the player is trying to move INTO the wall normal
-            float pushDirection = Vector3.Dot(worldMoveDir, lastWallNormal);
-            
-            if (pushDirection < 0)
-            {
-                // Zero out only the part of the input pointing into the wall
-                // This maintains movement "Along" or "Away" from the wall
-                Vector3 correctedDir = worldMoveDir - (lastWallNormal * pushDirection);
-                targetVelocity = correctedDir * moveSpeed;
-            }
-            else
-            {
-                targetVelocity = worldMoveDir * moveSpeed;
-            }
-        }
-        else if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
+        // 1. Filter out input according to context
+        if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
         {
             // Get the up-and-down-slope direction
             Vector3 slopeDir = Vector3.ProjectOnPlane(Vector3.down, slopeHit.normal).normalized;
             
-            // Check if player is trying to move vertically along the slope
+            // Check if player is trying to move up the slope
             float slopeInput = Vector3.Dot(worldMoveDir, slopeDir);
             
-            if (Mathf.Abs(slopeInput) > 0)
+            if (slopeInput < 0) // Moving up the slope
             {
-                // Zero out the component moving vertically along the slope
-                Vector3 correctedDir = worldMoveDir - (slopeDir * slopeInput);
+                // Gradually reduce up-slope movement
+                upSlopeResistance = Mathf.MoveTowards(upSlopeResistance, 1f, angleBasedInputReduction * Time.fixedDeltaTime);
+                Vector3 correctedDir = worldMoveDir - (slopeDir * slopeInput * upSlopeResistance);
                 targetVelocity = correctedDir * sneakSpeed;
             }
             else
@@ -425,14 +407,9 @@ public class ThirdPersonController : MonoBehaviour
         }
         else
         {
-            if (isCrouching && IsGrounded)
-            {
-                targetVelocity = GetCameraRelativeDirection(moveInput) * sneakSpeed;
-            }
-            else
-            {
-                targetVelocity = GetCameraRelativeDirection(moveInput) * moveSpeed;
-            }
+            upSlopeResistance = 0f; // Reset resistance when not on slope or not crouching
+            float movementMultiplier = (isCrouching && IsGrounded) ? sneakSpeed : moveSpeed;
+            targetVelocity = GetCameraRelativeDirection(moveInput) * movementMultiplier * brakeMultiplier;
         }
         
         if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
@@ -466,7 +443,7 @@ public class ThirdPersonController : MonoBehaviour
                 Quaternion targetRot = Quaternion.LookRotation(moveDir);
                 rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
             }
-            if (!isBraking && !IsSlideRotationFrozen) // Freeze slide rotation during wall jump arc
+            if (!isBraking && !wallRun.IsSlideRotationFrozen) // Freeze slide rotation during wall jump arc
             {
                 // Gradually align slide velocity with input direction
                 Vector3 targetVelocity = moveDir.normalized * slideVelocity.magnitude;
@@ -493,6 +470,7 @@ public class ThirdPersonController : MonoBehaviour
 
     private void ApplySliding()
     {
+        angleBasedInputReduction = 0f; // Reset input reduction each frame, will be recalculated if still on slope
         if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
         {
             // Calculate slope angle
@@ -500,11 +478,12 @@ public class ThirdPersonController : MonoBehaviour
             
             // Linearly-scaling acceleration with cap
             // At 10°: 2.5, at 20°: 5, at 40°+: 10
-            float angleBasedAcceleration = Mathf.Clamp(slopeAngle * 0.25f, 1f, 10f);
+            float angleBasedAcceleration = Mathf.Clamp(slopeAngle * (maxSlopeSlideAcceleration / maxSlopeAngleForSlide), 1f, maxSlopeSlideAcceleration);
+            angleBasedInputReduction = angleBasedAcceleration;
                     
             // Calculate max speed based on angle (steeper = faster)
-            // At 10°: 5, at 20°: 10, at 40°+: 20 (max)
-            float angleBasedMaxSpeed = Mathf.Clamp(slopeAngle * 0.5f, 1f, maxSlopeSlideSpeed);
+            // At 10°: 5, at 20°: 10, at 40°+: 20
+            float angleBasedMaxSpeed = Mathf.Clamp(slopeAngle * (maxSlopeSlideSpeed / maxSlopeAngleForSlide), 1f, maxSlopeSlideSpeed);
             
             // Calculate slide direction (down the slope)
             Vector3 desiredSlideDir = Vector3.ProjectOnPlane(Vector3.down, slopeHit.normal).normalized;
@@ -517,8 +496,7 @@ public class ThirdPersonController : MonoBehaviour
         }
         else
         {
-            isBraking = false;
-            if (slideVelocity.magnitude > 2f && IsGrounded)
+            if (slideVelocity.magnitude > 0 && IsGrounded)
             {
                 // Get current move direction and slide direction
                 Vector3 currentMoveDir = GetCameraRelativeDirection(moveInput);
@@ -528,16 +506,25 @@ public class ThirdPersonController : MonoBehaviour
                 float dot = Vector3.Dot(currentMoveDir, slideDir);
                 
                 // If flicking opposite direction (dot < -brakeInputThreshold)
-                if (moveInput.magnitude > 0.5f && dot < -brakeInputThreshold)
+                if (moveInput.magnitude > 0.5f && dot < -brakeInputThreshold && (slideVelocity.magnitude > (moveSpeed * 0.5f) || isBraking))
                 {
                     isBraking = true;
+                    brakeMultiplier = 0f;
                     
-                    // Apply brake deceleration (2x normal friction)
+                    // Apply brake deceleration
                     slideVelocity = Vector3.MoveTowards(slideVelocity, Vector3.zero, brakeDeceleration * Time.fixedDeltaTime);
                     
                     // Optional: Play brake effect (particle, sound)
                     Debug.Log("BRAKE!");
                 }
+                else
+                {
+                    isBraking = false;
+                }
+            }
+            else
+            {
+                isBraking = false;
             }
             
             // If not braking, apply normal slide friction
@@ -559,7 +546,9 @@ public class ThirdPersonController : MonoBehaviour
             }
         }
     }
+    #endregion
 
+    #region Jump Logic
     private void HandleJumpPhysics()
     {
         // 1. Initial Jump Impulse
@@ -608,7 +597,12 @@ public class ThirdPersonController : MonoBehaviour
             }
 
             // Stop the dash state so the normal jump physics take over horizontally
-            isDashing = false; 
+            isDashing = false;
+            if (!dashCancelled)
+            {
+                dashCancelTime = Time.time;
+                dashCancelled = true;
+            }
         }
 
         if (isBraking)
@@ -668,7 +662,14 @@ public class ThirdPersonController : MonoBehaviour
         {
             attack.StopHitbox();
             attack.windingUpSlam = false; // Cancel ground slam windup if we dash early
-            if (attack.isInCooldown) attack.ResetCombo();
+            if (attack.isInCooldown)
+            {
+                attack.ResetCombo();
+            }
+            else if (attack.cooldownTimer > 0)
+            {
+                attack.cooldownTimer = attack.finisherCooldownTime;
+            }
             if (attack.groundSlamLandingCoroutine != null)
             {
                 StopCoroutine(attack.groundSlamLandingCoroutine);
@@ -684,9 +685,10 @@ public class ThirdPersonController : MonoBehaviour
         if (!IsGrounded)
         {
             availableDashes--;
-            rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, slowFallSpeed), rb.linearVelocity.z);
+            rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Clamp(rb.linearVelocity.y, slowFallSpeed, shortJumpForce), rb.linearVelocity.z);
         }
         
+        dashCancelled = false;
         isDashing = true;
         pauseFastFall = true;
         dashTimer = dashDuration;
@@ -905,26 +907,6 @@ public class ThirdPersonController : MonoBehaviour
         {
             GrabLedge();
         }
-        
-        // Update wall jump arc timer
-        if (IsInWallJumpArc)
-        {
-            wallJumpArcTimer -= Time.deltaTime;
-            if (wallJumpArcTimer <= 0)
-            {
-                IsInWallJumpArc = false;
-            }
-        }
-        
-        // Update slide rotation freeze timer (shorter)
-        if (IsSlideRotationFrozen)
-        {
-            slideRotationFreezeTimer -= Time.deltaTime;
-            if (slideRotationFreezeTimer <= 0)
-            {
-                IsSlideRotationFrozen = false;
-            }
-        }
     }
 
     private void HandleGroundedState()
@@ -964,6 +946,7 @@ public class ThirdPersonController : MonoBehaviour
         if (!animator) return;
         animator.SetFloat("Speed", moveInput.magnitude * moveSpeed, 0.1f, Time.fixedDeltaTime);
         animator.SetBool("IsFalling", !IsGrounded && rb.linearVelocity.y < 0);
+        animator.SetBool("IsCrouching", isCrouching && IsGrounded);
     }
     #endregion
 }

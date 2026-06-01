@@ -45,7 +45,6 @@ public class PlayerBehaviour : MonoBehaviour
     CoinBehaviour currentCoin = null;
     DoorBehaviour currentDoor = null;
     KeycardBehaviour currentKeycard = null;
-    CrystalBehaviour currentCrystal = null;
 
     [SerializeField]
     float interactionDistance = 2f;
@@ -69,14 +68,6 @@ public class PlayerBehaviour : MonoBehaviour
         if (!mainCamera) mainCamera = Camera.main;
         fireAudioSource = GetComponent<AudioSource>();
         congratulatoryText.gameObject.SetActive(false);
-    }
-
-    /// <summary>
-    /// This method calls HandleRaycastHighlighting every frame to check for interactable objects.
-    /// </summary>
-    void Update()
-    {
-        HandleRaycastHighlighting();
     }
 
     /// <summary>
@@ -110,13 +101,7 @@ public class PlayerBehaviour : MonoBehaviour
                 Debug.Log("Interacting with door");
                 currentDoor.Interact(this);
             }
-            else if (hasCrystal)
-            {
-                Debug.Log("Interacting with crystal");
-                currentCrystal.Collect(this);
-                hasCrystal = true; // Set hasCrystal to true after collecting
-                currentCrystal = null; // Reset current crystal after interaction
-            }
+            
     }
 
     /// <summary>
@@ -149,126 +134,6 @@ public class PlayerBehaviour : MonoBehaviour
     public bool HasKeycard()
     {
         return hasKeycard;
-    }
-
-    /// <summary>
-    /// Handles raycasting to detect and highlight interactable objects in the game world.
-    /// This method checks for collectibles (coins), keycards, and doors within a specified interaction distance.
-    /// If an interactable object is detected, it highlights the object and allows interaction,
-    /// while unhighlighting any previously highlighted objects by setting them to null.
-    /// If no interactable objects are detected, it resets the current objects and disables interaction.
-    /// </summary>
-    void HandleRaycastHighlighting()
-    {
-        Ray ray = mainCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        RaycastHit hitinfo;
-
-        if (Physics.Raycast(ray, out hitinfo, interactionDistance))
-        {
-            // Handle coin detection
-            if (hitinfo.collider.CompareTag("Collectible"))
-            {
-                var newCoin = hitinfo.collider.GetComponent<CoinBehaviour>();
-                if (currentCoin != newCoin)
-                {
-                    // Unhighlight the previous coin if it exists
-                    if (currentCoin != null) currentCoin.Unhighlight();
-                    currentCoin = newCoin;
-                    currentCoin.Highlight();
-                    currentDoor = null;
-                    currentKeycard = null;
-                    canInteract = true; // Enable interaction
-                    Debug.Log("Coin detected");
-                }
-                return;
-            }
-            // Handle keycard detection
-            else if (hitinfo.collider.CompareTag("Keycard"))
-            {
-                var newKeycard = hitinfo.collider.GetComponent<KeycardBehaviour>();
-                if (currentKeycard != newKeycard)
-                {
-                    // Unhighlight the previous keycard if it exists
-                    if (currentKeycard != null) currentKeycard.Unhighlight();
-                    currentKeycard = newKeycard;
-                    currentKeycard.Highlight();
-                    currentCoin = null;
-                    currentDoor = null;
-                    canInteract = true; // Enable interaction
-                    Debug.Log("Keycard detected");
-                }
-                return;
-            }
-            // Handle door detection
-            else if (hitinfo.collider.CompareTag("Door"))
-            {
-                var newDoor = hitinfo.collider.GetComponent<DoorBehaviour>();
-                var doorVisual = newDoor.GetComponentInChildren<DoorLockVisual>(); // Get from newDoor
-
-                if (currentDoor != newDoor)
-                {
-                    // Unhighlight previous door if it exists
-                    if (currentDoor != null)
-                    {
-                        var prevVisual = currentDoor.GetComponentInChildren<DoorLockVisual>();
-                        if (prevVisual != null) prevVisual.Unhighlight();
-                    }
-
-                    // Highlight new door
-                    if (doorVisual != null) doorVisual.Highlight();
-
-                    currentDoor = newDoor;
-                    currentCoin = null;
-                    currentKeycard = null;
-                    canInteract = true; // Enable interaction
-                    Debug.Log("Door detected");
-                }
-                return;
-            }
-
-            // Handle crystal detection
-            else if (hitinfo.collider.CompareTag("Crystal"))
-            {
-                var newCrystal = hitinfo.collider.GetComponent<CrystalBehaviour>();
-                if (currentCrystal != newCrystal)
-                {
-                    // Unhighlight the previous crystal if it exists
-                    if (currentCrystal != null) currentCrystal.Unhighlight();
-                    currentCrystal = newCrystal;
-                    currentCrystal.Highlight();
-                    currentCoin = null;
-                    currentKeycard = null;
-                    currentDoor = null;
-                    canInteract = true; // Enable interaction
-                    hasCrystal = true; // Set hasCrystal to true when a crystal is detected
-                    Debug.Log("Crystal detected");
-                }
-                return;
-            }
-        }
-
-        // If no valid object is detected, reset current objects and disable interaction
-        if (currentCoin != null)
-        {
-            currentCoin.Unhighlight();
-            currentCoin = null;
-        }
-        if (currentKeycard != null)
-        {
-            currentKeycard.Unhighlight();
-            currentKeycard = null;
-        }
-        if (currentDoor != null)
-        {
-            var doorVisual = currentDoor.GetComponentInChildren<DoorLockVisual>();
-            if (doorVisual != null) doorVisual.Unhighlight();
-            currentDoor = null;
-        }
-        if (currentCrystal != null)
-        {
-            currentCrystal.Unhighlight();
-            currentCrystal = null;
-        }
     }
 
     /// <summary>
