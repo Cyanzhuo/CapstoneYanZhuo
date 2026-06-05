@@ -313,7 +313,7 @@ public class ThirdPersonController : MonoBehaviour
     
     public void OnDash(InputValue value)
     {
-        if (value.isPressed && !isDashing)
+        if (value.isPressed && !isDashing && !isGrabbingLedge)
         {
             if (IsGrounded || (enableAirDash && availableDashes > 0)) 
             {
@@ -444,7 +444,7 @@ public class ThirdPersonController : MonoBehaviour
                 Quaternion targetRot = Quaternion.LookRotation(moveDir);
                 rb.rotation = Quaternion.Slerp(rb.rotation, targetRot, rotationSpeed * Time.fixedDeltaTime);
             }
-            if (!isBraking && !wallRun.IsSlideRotationFrozen) // Freeze slide rotation during wall jump arc
+            if (!isBraking && (wallRun == null || !wallRun.IsSlideRotationFrozen)) // Freeze slide rotation during wall jump arc
             {
                 // Gradually align slide velocity with input direction
                 Vector3 targetVelocity = moveDir.normalized * slideVelocity.magnitude;

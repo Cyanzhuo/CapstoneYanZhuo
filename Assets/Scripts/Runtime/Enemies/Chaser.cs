@@ -12,14 +12,15 @@ public class Chaser : MonoBehaviour
     [SerializeField] LayerMask playerLayer;
     [SerializeField] float playerProximityThreshold = 1f;
     [SerializeField] Transform centerPoint;
-    [SerializeField] float searchRadius = 5f;
     [SerializeField] Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f);
     [SerializeField] Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
     [SerializeField] float idleDuration = 3f; // Time to stay in Idle state before patrolling
     [SerializeField] float focusDuration = 5f; // Time to stay in FocusOnTarget state
     [SerializeField] float retreatDuration = 2f; // Time to stay in Retreat state
     [SerializeField] float directionChangeInterval = 3f; // Time interval to change circling direction in FocusOnTarget state
-    [SerializeField] float rotationSpeed = 60f;
+    [SerializeField] float rotationSpeed = 60f; // Speed at which the enemy rotates to face the target in FocusOnTarget state
+    [SerializeField] float minRadius = 3f; // Minimum radius to maintain while circling the target
+    private float orbitAngle = 0f;
 
     int currentPatrolIndex = 0;
     public enum State
@@ -43,20 +44,9 @@ public class Chaser : MonoBehaviour
 
     void Update()
     {
-        Collider[] player = Physics.OverlapSphere(centerPoint.position, searchRadius, playerLayer);
-        if (player.Length > 0)
+        if (currentState != State.FocusOnTarget && orbitAngle != 0f)
         {
-            targetTransform = player[0].transform;
-        }
-         else
-        {
-            targetTransform = null;
-        }
-        Vector3 boxCenter = centerPoint.position + transform.forward * playerProximityThreshold;
-        Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, playerLayer);
-        if (hits.Length > 0 && currentState == State.ChaseTarget)
-        {
-            StartCoroutine(SwitchState(State.Attack));
+            orbitAngle = 0f; // Reset orbit angle when not in FocusOnTarget state
         }
     }
 
@@ -88,14 +78,6 @@ public class Chaser : MonoBehaviour
         
         while (currentState == State.Idle)
         {
-            // Perform idle behavior here
-            if (targetTransform != null)
-            {
-                // If there is a target, go to the chasing state
-                StartCoroutine(SwitchState(State.FocusOnTarget));
-                yield break;
-            }
-
             idleTimer += Time.deltaTime;
 
             // After idleDuration seconds, switch to Patrol state
@@ -140,8 +122,8 @@ public class Chaser : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
 
             // Move around the target in a circle
-            Vector3 perpendicular = Vector3.Cross(Vector3.up, directionToTarget.normalized);
-            Vector3 offset = perpendicular * circleDirection * directionToTarget.magnitude;
+            orbitAngle += Time.deltaTime * circleDirection;
+            Vector3 offset = new Vector3(Mathf.Cos(orbitAngle), 0, Mathf.Sin(orbitAngle)) * Mathf.Max(directionToTarget.magnitude, minRadius);
             myAgent.SetDestination(targetTransform.position + offset);
 
             if (notAttackingTimer >= focusDuration)
@@ -167,6 +149,12 @@ public class Chaser : MonoBehaviour
             else
             {
                 myAgent.SetDestination(targetTransform.position);
+                Vector3 boxCenter = centerPoint.position + transform.forward * playerProximityThreshold;
+                Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, playerLayer);
+                if (hits.Length > 0)
+                {
+                    StartCoroutine(SwitchState(State.Attack));
+                }
             }
             
             yield return null;
@@ -231,13 +219,6 @@ public class Chaser : MonoBehaviour
                 yield break;
             }
 
-            // Check if we see the player
-            if (targetTransform != null)
-            {
-                StartCoroutine(SwitchState(State.FocusOnTarget));
-                yield break;
-            }
-
             yield return null;
         }
     }
@@ -262,10 +243,22 @@ public class Chaser : MonoBehaviour
         }
     }
 
+    public void OnPlayerDetected(Transform player)
+    {
+        targetTransform = player;
+        if (currentState == State.Idle || currentState == State.Patrol)
+        {
+            StartCoroutine(SwitchState(State.FocusOnTarget));
+        }
+    }
+
+    public void OnPlayerLost()
+    {
+        targetTransform = null;
+    }
+
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(centerPoint.position, searchRadius);
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(centerPoint.position + transform.forward * playerProximityThreshold, attackBoxSize);
     }

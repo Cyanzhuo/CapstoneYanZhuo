@@ -248,12 +248,7 @@ public class EnemyBehaviour : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (currentState == EnemyState.Knockback && collision.gameObject.CompareTag("Wall"))
-        {
-            TakeDamage(collisionDamage);
-            currentState = EnemyState.Normal;
-        }
-        else if (collision.gameObject.CompareTag("Hazard"))
+        if (collision.gameObject.CompareTag("Hazard"))
         {
             Die();
         }

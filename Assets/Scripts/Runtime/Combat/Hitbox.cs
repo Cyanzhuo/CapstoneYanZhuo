@@ -94,7 +94,6 @@ public class Hitbox : MonoBehaviour
                         enemy.TakeDamage(weaponData.finisherDamage, weaponData.finisherPayback, true);
                         enemy.Knockback(knockbackDir, attack.defaultForce + playerController.targetVelocity.magnitude * 0.8f, true);
                         
-                        enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
                         hitStopDuration = longHitStopDuration; // Longer hitstop for finisher
 
@@ -130,7 +129,6 @@ public class Hitbox : MonoBehaviour
                         // Pass the direction (normalized) and force (magnitude) separately
                         enemy.Knockback(totalKnockback.normalized, totalKnockback.magnitude, false);
                         
-                        enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
                         playerController.pauseFastFall = false;
                         hitStopDuration = longHitStopDuration; // Longer hitstop for charged attack

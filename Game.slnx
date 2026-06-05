@@ -1,9 +1,10 @@
 ﻿<Solution>
-  <Project Path="LineworkLite.csproj" />
   <Project Path="Game.Runtime.csproj" />
+  <Project Path="LineworkLite.csproj" />
+  <Project Path="majo.Core.csproj" />
   <Project Path="LineworkLite.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
-  <Project Path="majo.Core.csproj" />
   <Project Path="Game.Input.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="majo.Core.Editor.csproj" />
 </Solution>
