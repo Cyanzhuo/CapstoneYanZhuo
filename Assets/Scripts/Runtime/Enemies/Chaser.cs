@@ -99,12 +99,6 @@ public class Chaser : MonoBehaviour
         // make the enemy turn to face the player and pace slowly around the player
         while (currentState == State.FocusOnTarget)
         {
-            if (targetTransform == null)
-            {
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
-            }
-
             notAttackingTimer += Time.deltaTime;
             directionChangeTimer += Time.deltaTime;
 
@@ -141,12 +135,7 @@ public class Chaser : MonoBehaviour
         while (currentState == State.ChaseTarget)
         {
             // Perform chasing behavior here
-            if (targetTransform == null)
-            {
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
-            }
-            else
+            if (targetTransform != null)
             {
                 myAgent.SetDestination(targetTransform.position);
                 Vector3 boxCenter = centerPoint.position + transform.forward * playerProximityThreshold;
@@ -175,12 +164,6 @@ public class Chaser : MonoBehaviour
         float retreatTimer = 0f;
         while (currentState == State.Retreat)
         {
-            if (targetTransform == null)
-            {
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
-            }
-
             // Move backwards away from the target
             Vector3 retreatDirection = (transform.position - targetTransform.position).normalized;
             myAgent.Move(retreatDirection * myAgent.speed * Time.deltaTime);
@@ -188,7 +171,14 @@ public class Chaser : MonoBehaviour
             retreatTimer += Time.deltaTime;
             if (retreatTimer >= retreatDuration)
             {
-                StartCoroutine(SwitchState(State.FocusOnTarget));
+                if (targetTransform != null)
+                {
+                    StartCoroutine(SwitchState(State.FocusOnTarget));
+                }
+                else
+                {
+                    StartCoroutine(SwitchState(State.Idle));
+                }
                 yield break;
             }
 
@@ -255,6 +245,10 @@ public class Chaser : MonoBehaviour
     public void OnPlayerLost()
     {
         targetTransform = null;
+        if (currentState == State.FocusOnTarget || currentState == State.ChaseTarget)
+        {
+            StartCoroutine(SwitchState(State.Idle));
+        }
     }
 
     void OnDrawGizmos()
