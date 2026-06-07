@@ -13,7 +13,6 @@ public class Chaser : MonoBehaviour
     [SerializeField] float playerProximityThreshold = 1f;
     [SerializeField] Transform centerPoint;
     [SerializeField] Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f);
-    [SerializeField] Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
     [SerializeField] float idleDuration = 3f; // Time to stay in Idle state before patrolling
     [SerializeField] float focusDuration = 5f; // Time to stay in FocusOnTarget state
     [SerializeField] float retreatDuration = 2f; // Time to stay in Retreat state
@@ -21,6 +20,13 @@ public class Chaser : MonoBehaviour
     [SerializeField] float rotationSpeed = 60f; // Speed at which the enemy rotates to face the target in FocusOnTarget state
     [SerializeField] float minRadius = 3f; // Minimum radius to maintain while circling the target
     private float orbitAngle = 0f;
+
+    [Header("Random Patrol")]
+    [SerializeField] private float patrolRange = 5f;  // How far from start position to roam
+    [SerializeField] private float patrolRadius = 5f;  // Search radius for NavMesh sampling
+    private Vector3 startPosition;
+    private Vector3 currentPatrolPoint;
+    private bool hasPatrolPoint;
 
     int currentPatrolIndex = 0;
     public enum State
@@ -38,6 +44,7 @@ public class Chaser : MonoBehaviour
 
     void Start()
     {
+        startPosition = transform.position;
         StartCoroutine(SwitchState(State.Idle));
         rb.isKinematic = true; // Start with kinematic rigidbody for NavMeshAgent control
     }
@@ -81,7 +88,7 @@ public class Chaser : MonoBehaviour
             idleTimer += Time.deltaTime;
 
             // After idleDuration seconds, switch to Patrol state
-            if (idleTimer >= idleDuration && patrolPoints.Length > 0)
+            if (idleTimer >= idleDuration)
             {
                 StartCoroutine(SwitchState(State.Patrol));
                 yield break;
@@ -171,14 +178,7 @@ public class Chaser : MonoBehaviour
             retreatTimer += Time.deltaTime;
             if (retreatTimer >= retreatDuration)
             {
-                if (targetTransform != null)
-                {
-                    StartCoroutine(SwitchState(State.FocusOnTarget));
-                }
-                else
-                {
-                    StartCoroutine(SwitchState(State.Idle));
-                }
+                StartCoroutine(SwitchState(State.FocusOnTarget));
                 yield break;
             }
 
@@ -188,25 +188,25 @@ public class Chaser : MonoBehaviour
 
     IEnumerator Patrol()
     {
-        // Make sure we have patrol points
-        if (patrolPoints.Length == 0)
-        {
-            StartCoroutine(SwitchState(State.Idle));
-            yield break;
-        }
-
-        // Set destination to current patrol point
-        myAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
-
         while (currentState == State.Patrol)
         {
-            // Check if we've reached the patrol point
-            if (!myAgent.pathPending && myAgent.remainingDistance <= myAgent.stoppingDistance)
+            // Set destination to current patrol point
+            if (!hasPatrolPoint)
             {
-                // Move to next patrol point (with wrap-around)
-                currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
+                FindRandomPatrolPoint();
+            }
+
+            if (hasPatrolPoint)
+            {
+                myAgent.SetDestination(currentPatrolPoint);
+
+                // Check if we've reached the patrol point
+                if (!myAgent.pathPending && myAgent.remainingDistance <= myAgent.stoppingDistance)
+                {
+                    hasPatrolPoint = false; // Need to find a new patrol point
+                    StartCoroutine(SwitchState(State.Idle));
+                    yield break;
+                }
             }
 
             yield return null;
@@ -233,6 +233,23 @@ public class Chaser : MonoBehaviour
         }
     }
 
+    private void FindRandomPatrolPoint()
+    {
+        Vector3 randomDirection = Random.insideUnitSphere * patrolRange;
+        randomDirection += startPosition;
+
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(randomDirection, out hit, patrolRadius, NavMesh.AllAreas))
+        {
+            currentPatrolPoint = hit.position;
+            hasPatrolPoint = true;
+        }
+        else
+        {
+            hasPatrolPoint = false; // Failed to find a valid patrol point
+        }
+    }
+
     public void OnPlayerDetected(Transform player)
     {
         targetTransform = player;
@@ -245,7 +262,7 @@ public class Chaser : MonoBehaviour
     public void OnPlayerLost()
     {
         targetTransform = null;
-        if (currentState == State.FocusOnTarget || currentState == State.ChaseTarget)
+        if (currentState == State.FocusOnTarget || currentState == State.ChaseTarget || currentState == State.Attack || currentState == State.Retreat)
         {
             StartCoroutine(SwitchState(State.Idle));
         }
