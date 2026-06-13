@@ -4,7 +4,8 @@
   <Project Path="majo.Core.csproj" />
   <Project Path="LineworkLite.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
-  <Project Path="Game.Input.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Game.UI.csproj" />
+  <Project Path="Game.Input.csproj" />
   <Project Path="majo.Core.Editor.csproj" />
 </Solution>

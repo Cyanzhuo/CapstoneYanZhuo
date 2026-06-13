@@ -176,7 +176,7 @@ public class EnemyBehaviour : MonoBehaviour
         counterTriggered = true;
         if (chaser != null)
         {
-            StartCoroutine(chaser.SwitchState(Chaser.State.Attack));
+            chaser.SwitchState(Chaser.State.Attack);
         }
     }
 
@@ -211,7 +211,7 @@ public class EnemyBehaviour : MonoBehaviour
         
         if (chaser != null)
         {
-            StartCoroutine(chaser.SwitchState(Chaser.State.Knockback));
+            chaser.SwitchState(Chaser.State.Knockback);
         }
     }
 
@@ -233,7 +233,7 @@ public class EnemyBehaviour : MonoBehaviour
 
         if (chaser != null)
         {
-            StartCoroutine(chaser.SwitchState(Chaser.State.Knockback));
+            chaser.SwitchState(Chaser.State.Knockback);
         }
     }
 

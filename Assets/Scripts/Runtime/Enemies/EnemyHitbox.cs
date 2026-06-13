@@ -3,6 +3,7 @@ using UnityEngine;
 public class EnemyHitbox : MonoBehaviour
 {
     [SerializeField] private Collider weaponCollider;
+    [SerializeField] private int DamageAmount = 10;
     private Coroutine activeHitStop = null;
     [SerializeField] private float shortHitStopDuration = 0.05f;
     [SerializeField] private float longHitStopDuration = 0.1f;
@@ -48,10 +49,12 @@ public class EnemyHitbox : MonoBehaviour
             PlayerBehaviour playerBehaviour = other.GetComponentInParent<PlayerBehaviour>();
             if (playerHealth != null)
             {
-                playerHealth.ApplyDamage(playerBehaviour);
+                playerHealth.ApplyDamage(playerBehaviour, DamageAmount);
                 StopHitStop(); // Stop any existing hitstop before starting a new one
                 activeHitStop = StartCoroutine(HitStop(hitStopDuration));
             }
+            Debug.Log("Hit player for " + DamageAmount + " damage.");
+            DeactivateHitbox();
         }
     }
 }

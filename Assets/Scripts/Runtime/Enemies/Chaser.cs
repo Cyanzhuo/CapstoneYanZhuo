@@ -7,6 +7,7 @@ public class Chaser : MonoBehaviour
     NavMeshAgent myAgent;
     Rigidbody rb;
     EnemyBehaviour enemyBehaviour;
+    [SerializeField] EnemyHitbox hitbox;
 
     [SerializeField] Transform targetTransform;
     [SerializeField] LayerMask playerLayer;
@@ -28,7 +29,6 @@ public class Chaser : MonoBehaviour
     private Vector3 currentPatrolPoint;
     private bool hasPatrolPoint;
 
-    int currentPatrolIndex = 0;
     public enum State
     {
         Idle, Patrol, FocusOnTarget, ChaseTarget, Attack, Retreat, Knockback
@@ -45,7 +45,8 @@ public class Chaser : MonoBehaviour
     void Start()
     {
         startPosition = transform.position;
-        StartCoroutine(SwitchState(State.Idle));
+        SwitchState(State.Idle);
+        StartCoroutine(StateMachine());
         rb.isKinematic = true; // Start with kinematic rigidbody for NavMeshAgent control
     }
 
@@ -57,26 +58,47 @@ public class Chaser : MonoBehaviour
         }
     }
 
-    public IEnumerator SwitchState(State newState)
+    public void SwitchState(State newState)
     {
         if (currentState == newState)
         {
-            yield break; // Exit if the state is already the same
+            return; // Exit if the state is already the same
         }
 
         currentState = newState;
+    }
 
-        StartCoroutine(newState switch
+    private IEnumerator StateMachine()
+    {
+        while (true)
         {
-            State.Idle => Idle(),
-            State.FocusOnTarget => FocusOnTarget(),
-            State.ChaseTarget => ChaseTarget(),
-            State.Attack => Attack(),
-            State.Retreat => Retreat(),
-            State.Patrol => Patrol(),
-            State.Knockback => Knockback(),
-            _ => null
-        });
+            switch (currentState)
+            {
+                case State.Idle:
+                    yield return StartCoroutine(Idle());
+                    break;
+                case State.Patrol:
+                    yield return StartCoroutine(Patrol());
+                    break;
+                case State.FocusOnTarget:
+                    yield return StartCoroutine(FocusOnTarget());
+                    break;
+                case State.ChaseTarget:
+                    yield return StartCoroutine(ChaseTarget());
+                    break;
+                case State.Attack:
+                    yield return StartCoroutine(Attack());
+                    break;
+                case State.Retreat:
+                    yield return StartCoroutine(Retreat());
+                    break;
+                case State.Knockback:
+                    yield return StartCoroutine(Knockback());
+                    break;
+            }
+
+            yield return null;
+        }
     }
 
     IEnumerator Idle()
@@ -90,7 +112,7 @@ public class Chaser : MonoBehaviour
             // After idleDuration seconds, switch to Patrol state
             if (idleTimer >= idleDuration)
             {
-                StartCoroutine(SwitchState(State.Patrol));
+                SwitchState(State.Patrol);
                 yield break;
             }
 
@@ -129,7 +151,7 @@ public class Chaser : MonoBehaviour
 
             if (notAttackingTimer >= focusDuration)
             {
-                StartCoroutine(SwitchState(State.ChaseTarget));
+                SwitchState(State.ChaseTarget);
                 yield break;
             }
             yield return null;
@@ -149,7 +171,7 @@ public class Chaser : MonoBehaviour
                 Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, playerLayer);
                 if (hits.Length > 0)
                 {
-                    StartCoroutine(SwitchState(State.Attack));
+                    SwitchState(State.Attack);
                 }
             }
             
@@ -159,9 +181,11 @@ public class Chaser : MonoBehaviour
 
     IEnumerator Attack()
     {
+        hitbox.ActivateHitbox();
         // Wait for attack animation to finish before switching to retreat
         yield return new WaitForSeconds(1f); // Placeholder for attack duration
-        StartCoroutine(SwitchState(State.Retreat));
+        hitbox.DeactivateHitbox();
+        SwitchState(State.Retreat);
         yield break;
     }
     
@@ -178,7 +202,7 @@ public class Chaser : MonoBehaviour
             retreatTimer += Time.deltaTime;
             if (retreatTimer >= retreatDuration)
             {
-                StartCoroutine(SwitchState(State.FocusOnTarget));
+                SwitchState(State.FocusOnTarget);
                 yield break;
             }
 
@@ -204,7 +228,7 @@ public class Chaser : MonoBehaviour
                 if (!myAgent.pathPending && myAgent.remainingDistance <= myAgent.stoppingDistance)
                 {
                     hasPatrolPoint = false; // Need to find a new patrol point
-                    StartCoroutine(SwitchState(State.Idle));
+                    SwitchState(State.Idle);
                     yield break;
                 }
             }
@@ -225,7 +249,7 @@ public class Chaser : MonoBehaviour
                 // Re-enable NavMesh agent and rigidbody
                 myAgent.enabled = true;
                 rb.isKinematic = true;
-                StartCoroutine(SwitchState(State.Idle));
+                SwitchState(State.Idle);
                 yield break;
             }
 
@@ -255,7 +279,7 @@ public class Chaser : MonoBehaviour
         targetTransform = player;
         if (currentState == State.Idle || currentState == State.Patrol)
         {
-            StartCoroutine(SwitchState(State.FocusOnTarget));
+            SwitchState(State.FocusOnTarget);
         }
     }
 
@@ -264,7 +288,7 @@ public class Chaser : MonoBehaviour
         targetTransform = null;
         if (currentState == State.FocusOnTarget || currentState == State.ChaseTarget || currentState == State.Attack || currentState == State.Retreat)
         {
-            StartCoroutine(SwitchState(State.Idle));
+            SwitchState(State.Idle);
         }
     }
 

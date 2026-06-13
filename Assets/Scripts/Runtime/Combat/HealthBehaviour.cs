@@ -12,8 +12,6 @@ public class HealthBehaviour : MonoBehaviour
     [SerializeField]
     int healAmount = 1;
     [SerializeField]
-    int DamageAmount = 1;
-    [SerializeField]
     float damageInterval = 1f;
     private float lastDamageTime;
     AudioSource audioSource; // Reference to the AudioSource component for playing sounds
@@ -41,7 +39,7 @@ public class HealthBehaviour : MonoBehaviour
         player.ModifyHealth(healAmount);
     }
     // Method to apply damage
-    public void ApplyDamage(PlayerBehaviour player)
+    public void ApplyDamage(PlayerBehaviour player, int DamageAmount)
     {
         // Only damage if enough time has passed
         if (Time.time - lastDamageTime >= damageInterval)
