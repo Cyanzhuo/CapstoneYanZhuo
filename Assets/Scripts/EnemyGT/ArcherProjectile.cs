@@ -15,9 +15,8 @@ public class ArcherProjectile : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
-    public void Launch(Vector3 direction, float speed, int damageAmount, string targetTag, Transform owner)
+    public void Launch(Vector3 direction, float speed, string targetTag, Transform owner)
     {
-        damage = damageAmount;
         playerTag = targetTag;
         ownerRoot = owner;
 
@@ -47,12 +46,6 @@ public class ArcherProjectile : MonoBehaviour
         if (other.CompareTag(playerTag) || otherRoot.CompareTag(playerTag))
         {
             hasHit = true;
-
-            other.SendMessageUpwards(
-                "TakeDamage",
-                damage,
-                SendMessageOptions.DontRequireReceiver
-            );
 
             Destroy(gameObject);
             return;

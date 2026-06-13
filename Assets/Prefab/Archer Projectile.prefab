@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7385518951101184983}
   - component: {fileID: 8983630898142073257}
   - component: {fileID: 5729788288603280819}
+  - component: {fileID: 3870087466367210492}
   m_Layer: 0
   m_Name: Archer Projectile
   m_TagString: Untagged
@@ -30,7 +31,7 @@ Transform:
   m_GameObject: {fileID: 8232412741338911169}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.22179, y: 0.32653, z: 5.82}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 0.2, y: 0.2, z: 0.2}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -154,3 +155,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcherProjectile
   lifeTime: 5
+--- !u!114 &3870087466367210492
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8232412741338911169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfdabb24bdb01b847ada978a3c135243, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::EnemyHitbox
+  weaponCollider: {fileID: 7385518951101184983}
+  colliderOffByDefault: 0
+  DamageAmount: 10
+  shortHitStopDuration: 0.05
+  longHitStopDuration: 0.1

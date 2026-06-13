@@ -26,7 +26,6 @@ public class ArcherAI : MonoBehaviour
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private Transform firePoint;
     [SerializeField] private Vector3 firePointOffset = new Vector3(0f, 1.2f, 1f);
-    [SerializeField] private int damage = 10;
     [SerializeField] private float projectileSpeed = 15f;
     [SerializeField] private float attackRange = 10f;
     [SerializeField] private float minimumDistance = 4f;
@@ -365,7 +364,7 @@ public class ArcherAI : MonoBehaviour
 
         if (projectile != null)
         {
-            projectile.Launch(direction, projectileSpeed, damage, playerTag, transform.root);
+            projectile.Launch(direction, projectileSpeed, playerTag, transform.root);
         }
         else
         {

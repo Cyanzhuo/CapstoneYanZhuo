@@ -830,7 +830,7 @@ MonoBehaviour:
   retreatDuration: 1
   directionChangeInterval: 3
   rotationSpeed: 60
-  minRadius: 3
+  minRadius: 1
   patrolRange: 5
   patrolRadius: 5
   currentState: 0
@@ -17117,7 +17117,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 94cf619eeb08d9e488da5f5502a90987, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -17161,7 +17161,6 @@ MonoBehaviour:
   projectilePrefab: {fileID: 8232412741338911169, guid: 7c855ce955f993b4a8b056fec1c945a6, type: 3}
   firePoint: {fileID: 0}
   firePointOffset: {x: 0, y: 1.2, z: 1}
-  damage: 10
   projectileSpeed: 15
   attackRange: 10
   minimumDistance: 4
@@ -17325,6 +17324,50 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.075, z: 1}
   m_LocalScale: {x: 1, y: 0.15, z: 0.2}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1464365271
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1464365273}
+  - component: {fileID: 1464365272}
+  m_Layer: 0
+  m_Name: HitStopManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1464365272
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1464365271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 214a8b0780d013842852d5c90f860776, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::HitStopManager
+--- !u!4 &1464365273
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1464365271}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -36584,6 +36627,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::EnemyHitbox
   weaponCollider: {fileID: 9179130960957753696}
+  colliderOffByDefault: 1
   DamageAmount: 10
   shortHitStopDuration: 0.05
   longHitStopDuration: 0.1
@@ -36662,6 +36706,7 @@ SceneRoots:
   - {fileID: 1235444785}
   - {fileID: 1794248466}
   - {fileID: 811340831}
+  - {fileID: 1464365273}
   - {fileID: 261749195}
   - {fileID: 1207251032}
   - {fileID: 486504301}

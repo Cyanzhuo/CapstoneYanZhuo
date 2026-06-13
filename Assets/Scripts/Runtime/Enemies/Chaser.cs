@@ -195,6 +195,11 @@ public class Chaser : MonoBehaviour
         float retreatTimer = 0f;
         while (currentState == State.Retreat)
         {
+            if (targetTransform == null)
+            {
+                SwitchState(State.Idle);
+                yield break;
+            }
             // Move backwards away from the target
             Vector3 retreatDirection = (transform.position - targetTransform.position).normalized;
             myAgent.Move(retreatDirection * myAgent.speed * Time.deltaTime);
