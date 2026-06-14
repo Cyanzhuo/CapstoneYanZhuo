@@ -1,3 +1,4 @@
+using Game.Audio;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -298,6 +299,8 @@ public class Hitbox : MonoBehaviour
 
                         break;
                 }
+                InterimAudioDirector.TryPlayMove(GetHitCue(), other.transform.position);
+
                 // Apply hitstop
                 StopHitStop(); // Stop any existing hitstop before starting a new one
                 activeHitStop = StartCoroutine(HitStop(hitStopDuration));
@@ -308,5 +311,24 @@ public class Hitbox : MonoBehaviour
     void OnTriggerStay(Collider other)
     {
         OnTriggerEnter(other); // For if the attack is triggered before the weapon has fully left the enemy's hitbox, ensuring they still get hit
+    }
+
+    private InterimAudioCue GetHitCue()
+    {
+        switch (attack.currentAttackType)
+        {
+            case Attack.AttackType.Charged:
+            case Attack.AttackType.Finisher:
+            case Attack.AttackType.BoundSpike:
+                return InterimAudioCue.ChargedAttackHit;
+            case Attack.AttackType.Launcher:
+                return InterimAudioCue.LauncherHit;
+            case Attack.AttackType.GroundSlam:
+            case Attack.AttackType.DashSlam:
+            case Attack.AttackType.Spike:
+                return InterimAudioCue.GroundSlamHit;
+            default:
+                return InterimAudioCue.BasicAttackHit;
+        }
     }
 }

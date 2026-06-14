@@ -1,3 +1,4 @@
+using Game.Audio;
 using UnityEngine;
 
 public class ArcherProjectile : MonoBehaviour
@@ -46,6 +47,7 @@ public class ArcherProjectile : MonoBehaviour
         if (other.CompareTag(playerTag) || otherRoot.CompareTag(playerTag))
         {
             hasHit = true;
+            InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttackHit, transform.position);
 
             Destroy(gameObject);
             return;

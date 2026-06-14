@@ -1,3 +1,4 @@
+using Game.Audio;
 using UnityEngine;
 
 public class EnemyHitbox : MonoBehaviour
@@ -35,6 +36,7 @@ public class EnemyHitbox : MonoBehaviour
             if (playerHealth != null)
             {
                 playerHealth.ApplyDamage(playerBehaviour, DamageAmount);
+                InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttackHit, transform.position);
                 HitStopManager.TriggerHitStop(shortHitStopDuration);
             }
             Debug.Log("Hit player for " + DamageAmount + " damage.");

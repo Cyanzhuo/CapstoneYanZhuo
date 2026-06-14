@@ -1,4 +1,5 @@
 using System.Collections;
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -181,6 +182,7 @@ public class Chaser : MonoBehaviour
 
     IEnumerator Attack()
     {
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttack, transform.position);
         hitbox.ActivateHitbox();
         // Wait for attack animation to finish before switching to retreat
         yield return new WaitForSeconds(1f); // Placeholder for attack duration

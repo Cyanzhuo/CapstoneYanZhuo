@@ -1,4 +1,5 @@
 using System.Collections;
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -223,6 +224,7 @@ public class ArcherAI : MonoBehaviour
         StopMoving();
         FacePlayer();
 
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttack, transform.position);
         yield return new WaitForSeconds(attackWindupTime);
 
         ShootProjectile();
@@ -359,6 +361,8 @@ public class ArcherAI : MonoBehaviour
             spawnPosition,
             Quaternion.LookRotation(direction)
         );
+
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.AerialPush, spawnPosition);
 
         ArcherProjectile projectile = projectileObject.GetComponent<ArcherProjectile>();
 

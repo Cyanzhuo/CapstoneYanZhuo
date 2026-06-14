@@ -8,6 +8,7 @@
 * This script is designed to be attached to a GameObject with a Rigidbody component and a Collider.
 */
 
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -110,6 +111,7 @@ public class ThirdPersonController : MonoBehaviour
     [HideInInspector] public int availableChargeAttackJumps;
     [HideInInspector] public bool canCoyote;
     private bool wasGrounded;
+    private float lastUngroundedVerticalSpeed;
     private float dashTimer;
     private float dashCooldownTimer;
     [HideInInspector] public Vector3 dashDirection;
@@ -287,6 +289,7 @@ public class ThirdPersonController : MonoBehaviour
     public void OnCrouchStarted()
     {
         isCrouching = true;
+        InterimAudioDirector.TryPlayPlayerCrouch(transform.position);
         
         if (IsGrounded)
         {
@@ -302,6 +305,8 @@ public class ThirdPersonController : MonoBehaviour
                 {
                     slideVelocity = dashDir * dashSpeed;
                 }
+
+                InterimAudioDirector.TryPlayMove(InterimAudioCue.Slide, transform.position);
             }
         }
     }
@@ -342,6 +347,7 @@ public class ThirdPersonController : MonoBehaviour
 
         if (isGrabbingLedge)
         {
+            ReportMovementAudio(false);
             HandleLedgeGrab();
             return;
         }
@@ -363,6 +369,7 @@ public class ThirdPersonController : MonoBehaviour
         if (isDashing)
         {
             ApplyDashMovement();
+            ReportMovementAudio(false);
             return;
         }
 
@@ -371,12 +378,14 @@ public class ThirdPersonController : MonoBehaviour
         if (isAttacking)
         {
             ApplyAttackMovement();
+            ReportMovementAudio(false);
             return;
         }
 
         ApplyMovement();
         ApplyRotation();
         UpdateAnimation();
+        ReportMovementAudio(true);
     }
 
     #region Movement Logic
@@ -624,10 +633,15 @@ public class ThirdPersonController : MonoBehaviour
             SetSlideVelocity(motionRedirect * slideVelocity.magnitude);
         }
 
-        if (!IsGrounded && Time.time - lastGroundedTime > coyoteTime)
+        bool isAirJump = !IsGrounded && Time.time - lastGroundedTime > coyoteTime;
+
+        if (isAirJump)
             availableJumps--;
 
-        if (jumpSound) AudioSource.PlayClipAtPoint(jumpSound, transform.position);
+        if (!InterimAudioDirector.TryPlayPlayerJump(transform.position, isAirJump) && jumpSound)
+        {
+            AudioSource.PlayClipAtPoint(jumpSound, transform.position);
+        }
         
         float force = (IsGrounded || Time.time - lastGroundedTime <= coyoteTime) ? jumpForce : doubleJumpForce;
         
@@ -709,7 +723,10 @@ public class ThirdPersonController : MonoBehaviour
             SetSlideVelocity(slideVelocity.magnitude * dashDirection);
         }
 
-        if (dashSound) AudioSource.PlayClipAtPoint(dashSound, transform.position);
+        if (!InterimAudioDirector.TryPlayPlayerDash(transform.position) && dashSound)
+        {
+            AudioSource.PlayClipAtPoint(dashSound, transform.position);
+        }
     }
 
     private void ApplyDashMovement()
@@ -915,11 +932,20 @@ public class ThirdPersonController : MonoBehaviour
     private void HandleGroundedState()
     {
         bool currentlyGrounded = IsGrounded;
+
+        if (!currentlyGrounded && rb != null)
+        {
+            lastUngroundedVerticalSpeed = rb.linearVelocity.y;
+        }
+
         if (currentlyGrounded)
         {
             lastGroundedTime = Time.time;
             if (!wasGrounded)
             {
+                bool heavyLanding = lastUngroundedVerticalSpeed < -8f || landedFromGroundSlam;
+                InterimAudioDirector.TryPlayPlayerLand(transform.position, heavyLanding);
+
                 availableJumps = 1;
                 availableAerialPushes = 1;
                 availableChargeAttackJumps = 1;
@@ -934,6 +960,33 @@ public class ThirdPersonController : MonoBehaviour
             }
         }
         wasGrounded = currentlyGrounded;
+    }
+
+    private void ReportMovementAudio(bool canPlayMovement)
+    {
+        if (rb == null)
+        {
+            return;
+        }
+
+        bool grounded = IsGrounded;
+        Vector3 horizontalVelocity = rb.linearVelocity;
+        horizontalVelocity.y = 0f;
+
+        float horizontalSpeed = horizontalVelocity.magnitude;
+        bool moving = canPlayMovement &&
+                      grounded &&
+                      (moveInput.magnitude > 0.1f || horizontalSpeed > 0.25f);
+        bool running = !isCrouching && moveInput.magnitude > 0.65f && horizontalSpeed >= moveSpeed * 0.75f;
+        float speedRatio = horizontalSpeed / Mathf.Max(moveSpeed, 0.01f);
+
+        InterimAudioDirector.ReportPlayerMovement(
+            transform.position,
+            moving,
+            isCrouching && grounded,
+            running,
+            speedRatio
+        );
     }
 
     public Vector3 GetCameraRelativeDirection(Vector2 input)

@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using Game.Audio;
 using UnityEngine;
 
 public class Menu : MonoBehaviour
@@ -66,6 +67,8 @@ public class Menu : MonoBehaviour
 
     public void TogglePause()
     {
+        InterimAudioDirector.TryPlayUiClick();
+
         if (isPaused)
         {
             ResumeGame();

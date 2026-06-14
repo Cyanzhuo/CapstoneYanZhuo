@@ -8,6 +8,7 @@
 * The script also manages the original and highlight materials for visual feedback.
 */
 
+using Game.Audio;
 using UnityEngine;
 
 public class KeycardBehaviour : MonoBehaviour
@@ -59,7 +60,10 @@ public class KeycardBehaviour : MonoBehaviour
     {
         // Logic for collecting the keycard
         if (isCollected) return; // Prevent double collection
-        AudioSource.PlayClipAtPoint(keycardAudioClip, transform.position); // Play the keycard collection sound
+        if (!InterimAudioDirector.TryPlayInteraction(InterimAudioCue.Interact, transform.position) && keycardAudioClip)
+        {
+            AudioSource.PlayClipAtPoint(keycardAudioClip, transform.position); // Play the keycard collection sound
+        }
         isCollected = true; // Mark as collected
         Debug.Log("keycard collected!");
         Destroy(gameObject);

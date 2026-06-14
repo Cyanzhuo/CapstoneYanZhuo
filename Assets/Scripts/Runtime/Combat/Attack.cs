@@ -6,6 +6,7 @@
 * It also applies a force to the player to move them towards the enemy when attacking.
 */
 
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
@@ -176,12 +177,14 @@ public class Attack : MonoBehaviour
 
             if (holdDuration >= chargeLevel2Threshold && chargeLevel < 2)
             {
+                InterimAudioDirector.TryPlayMove(InterimAudioCue.Charge, transform.position);
                 PlayEffect(chargeEffect);
                 Debug.Log("Charge Level 2!");
                 chargeLevel = 2;
             }
             else if (holdDuration >= chargeThreshold && chargeLevel < 1)
             {
+                InterimAudioDirector.TryPlayMove(InterimAudioCue.Charge, transform.position);
                 PlayEffect(chargeEffect);
                 Debug.Log("Charge Level 1!");
                 chargeLevel = 1;
@@ -383,6 +386,7 @@ public class Attack : MonoBehaviour
         float force = countsAsDashAttack ? dashForce : defaultForce;
 
         // 2. Visuals
+        InterimAudioDirector.TryPlayMove(isCharging ? InterimAudioCue.ChargedAttack : InterimAudioCue.BasicAttack, transform.position);
         PlayEffect((isFinisher || isCharging) ? finisherEffect : attackEffect);
         
         // 3. Hitbox Activation
@@ -494,6 +498,10 @@ public class Attack : MonoBehaviour
 
     private void Launcher(float force, bool shouldTriggerCooldown, bool countsAsDashAttack = false)
     {
+        InterimAudioDirector.TryPlayMove(
+            isCharging ? InterimAudioCue.ChargedCrouchAttack : InterimAudioCue.LauncherJump,
+            transform.position
+        );
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         appliedJuggleForce = force;
         currentAttackType = AttackType.Launcher;
@@ -560,6 +568,7 @@ public class Attack : MonoBehaviour
         playerController.freezeRotation = true;
         playerController.pauseFastFall = false;
         rb.AddForce(Vector3.down * 10f, ForceMode.Impulse);
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.GroundSlamJump, transform.position);
         PlayEffect(attackEffect);
         if (countsAsDashSlam)
         {
@@ -611,6 +620,7 @@ public class Attack : MonoBehaviour
             playerController.SetSlideVelocity(transform.forward * Mathf.Max(playerController.slideVelocity.magnitude, bounceForce)); // Maintain momentum from dash slam after landing
         }
 
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.GroundSlamHit, transform.position);
         StopHitbox();
         isInCooldown = true;
         cooldownTimer = shortCooldownTime;
@@ -621,6 +631,7 @@ public class Attack : MonoBehaviour
     private void Spike()
     {
         windingUpSlam = false;
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.SpikeSecondJump, transform.position);
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         currentAttackType = AttackType.Spike;
         weaponHitbox.ActivateHitbox();
@@ -655,6 +666,7 @@ public class Attack : MonoBehaviour
     private void BoundSpike()
     {
         windingUpSlam = false;
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.ChargedAttack, transform.position);
         PlayEffect(attackEffect);
         currentAttackType = AttackType.BoundSpike;
         weaponHitbox.ActivateHitbox();
@@ -689,6 +701,7 @@ public class Attack : MonoBehaviour
     private void AerialPush()
     {
         windingUpSlam = false;
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.AerialPush, transform.position);
         PlayEffect(attackEffect);
         weaponHitbox.ActivateHitbox();
         attackDurationTimer = aerialPushDuration;

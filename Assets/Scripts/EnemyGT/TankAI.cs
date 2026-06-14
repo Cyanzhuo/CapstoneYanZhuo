@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -214,6 +215,7 @@ public class TankAI : MonoBehaviour
         StopMoving();
         FacePlayer();
 
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.GroundSlamJump, transform.position);
         yield return new WaitForSeconds(attackWindupTime);
 
         float activeTimer = 0f;
@@ -303,6 +305,7 @@ public class TankAI : MonoBehaviour
             }
 
             damagedTargets.Add(targetRoot);
+            InterimAudioDirector.TryPlayMove(InterimAudioCue.GroundSlamHit, hit.transform.position);
 
             hit.SendMessageUpwards(
                 "TakeDamage",

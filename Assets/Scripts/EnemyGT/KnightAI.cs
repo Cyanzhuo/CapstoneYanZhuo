@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -226,6 +227,7 @@ public class KnightAI : MonoBehaviour
         StopMoving();
         FacePlayer();
 
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttack, transform.position);
         yield return new WaitForSeconds(attackWindupTime);
 
         float activeTimer = 0f;
@@ -357,6 +359,7 @@ public class KnightAI : MonoBehaviour
             }
 
             damagedTargets.Add(targetRoot);
+            InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttackHit, hit.transform.position);
 
             hit.SendMessageUpwards(
                 "TakeDamage",

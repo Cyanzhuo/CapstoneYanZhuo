@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -243,6 +244,7 @@ public class KingAI : MonoBehaviour
         StopMoving();
         FacePlayer();
 
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.ChargedAttack, transform.position);
         yield return new WaitForSeconds(meleeWindupTime);
 
         float activeTimer = 0f;
@@ -380,6 +382,7 @@ public class KingAI : MonoBehaviour
             }
 
             damagedTargets.Add(targetRoot);
+            InterimAudioDirector.TryPlayMove(InterimAudioCue.ChargedAttackHit, hit.transform.position);
 
             hit.SendMessageUpwards(
                 "TakeDamage",

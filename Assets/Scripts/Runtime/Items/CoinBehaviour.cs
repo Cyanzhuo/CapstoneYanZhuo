@@ -7,6 +7,7 @@
 * The script also ensures that the coin can only be collected once to prevent double collection.
 */
 
+using Game.Audio;
 using UnityEngine;
 
 public class CoinBehaviour : MonoBehaviour
@@ -30,7 +31,10 @@ public class CoinBehaviour : MonoBehaviour
     {
         // Logic for collecting the coin
         if (isCollected) return; // Prevent double collection
-        AudioSource.PlayClipAtPoint(coinAudioClip, transform.position); // Play the coin collection sound
+        if (!InterimAudioDirector.TryPlayGoldPickup(transform.position) && coinAudioClip)
+        {
+            AudioSource.PlayClipAtPoint(coinAudioClip, transform.position); // Play the coin collection sound
+        }
         isCollected = true; // Mark as collected
         Debug.Log("Coin collected!");
 
