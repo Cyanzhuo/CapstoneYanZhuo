@@ -5,7 +5,6 @@ public class ArcherProjectile : MonoBehaviour
 {
     [SerializeField] private float lifeTime = 5f;
 
-    private int damage;
     private string playerTag;
     private Rigidbody rb;
     private Transform ownerRoot;

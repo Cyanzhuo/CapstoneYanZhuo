@@ -6,6 +6,8 @@ using UnityEngine.AI;
 public class ArcherAI : MonoBehaviour
 {
     private NavMeshAgent agent;
+    Rigidbody rb;
+    EnemyBehaviour enemyBehaviour;
 
     [Header("Target")]
     [SerializeField] private Transform player;
@@ -52,7 +54,8 @@ public class ArcherAI : MonoBehaviour
         Patrol,
         MoveToRange,
         RangedAttack,
-        Retreat
+        Retreat,
+        Knockback
     }
 
     [SerializeField] private ArcherState currentState = ArcherState.Idle;
@@ -60,6 +63,8 @@ public class ArcherAI : MonoBehaviour
     private void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
+        rb = GetComponent<Rigidbody>();
+        enemyBehaviour = GetComponent<EnemyBehaviour>();
     }
 
     private void Start()
@@ -92,6 +97,10 @@ public class ArcherAI : MonoBehaviour
 
                 case ArcherState.Retreat:
                     yield return StartCoroutine(RetreatState());
+                    break;
+                    
+                case ArcherState.Knockback:
+                    yield return StartCoroutine(Knockback());
                     break;
             }
 
@@ -427,6 +436,26 @@ public class ArcherAI : MonoBehaviour
     private bool AgentReady()
     {
         return agent != null && agent.enabled && agent.isOnNavMesh;
+    }
+
+    IEnumerator Knockback()
+    {
+        // Wait for linear velocity to be 0 and enemy to be grounded before switching back to idle
+        while (currentState == ArcherState.Knockback)
+        {
+            // Wait a brief moment to allow physics to apply knockback force
+            yield return new WaitForSeconds(0.1f);
+            if (rb.linearVelocity.magnitude < 0.1f && enemyBehaviour.IsGrounded && enemyBehaviour.health > 0)
+            {
+                // Re-enable NavMesh agent and rigidbody
+                agent.enabled = true;
+                rb.isKinematic = true;
+                currentState = ArcherState.Idle;
+                yield break;
+            }
+
+            yield return null;
+        }
     }
 
     private void OnDrawGizmosSelected()
