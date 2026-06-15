@@ -6,7 +6,6 @@ public class EnemyBehaviour : MonoBehaviour
 {
     [Header("Stats")]
     public int health = 100;
-    public int damageAmount = 10;
     int collisionDamage = 5;
     float timeTillDemise = 0.5f;
     float demiseTimer = 0f;
