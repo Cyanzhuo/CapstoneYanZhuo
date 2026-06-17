@@ -10,6 +10,10 @@ public class Chaser : MonoBehaviour
     EnemyBehaviour enemyBehaviour;
     [SerializeField] EnemyHitbox hitbox;
 
+    [Header("Audio")]
+    [SerializeField] private InterimAudioCue attackStartCue = InterimAudioCue.BasicAttack;
+    [SerializeField] private InterimAudioCue attackHitCue = InterimAudioCue.BasicAttackHit;
+
     [SerializeField] Transform targetTransform;
     [SerializeField] LayerMask playerLayer;
     [SerializeField] float playerProximityThreshold = 1f;
@@ -41,6 +45,11 @@ public class Chaser : MonoBehaviour
         myAgent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
         enemyBehaviour = GetComponent<EnemyBehaviour>();
+
+        if (hitbox != null)
+        {
+            hitbox.SetHitCue(attackHitCue);
+        }
     }
 
     void Start()
@@ -182,7 +191,7 @@ public class Chaser : MonoBehaviour
 
     IEnumerator Attack()
     {
-        InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttack, transform.position);
+        InterimAudioDirector.TryPlayMove(attackStartCue, transform.position);
         hitbox.ActivateHitbox();
         // Wait for attack animation to finish before switching to retreat
         yield return new WaitForSeconds(1f); // Placeholder for attack duration

@@ -443,6 +443,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::Chaser
   hitbox: {fileID: 4715263718727854798}
+  attackStartCue: 19
+  attackHitCue: 20
   targetTransform: {fileID: 0}
   playerLayer:
     serializedVersion: 2
@@ -1578,6 +1580,7 @@ MonoBehaviour:
   weaponCollider: {fileID: 2902316373607126593}
   colliderOffByDefault: 1
   DamageAmount: 20
+  hitCue: 20
   shortHitStopDuration: 0.05
   longHitStopDuration: 0.1
 --- !u!1 &5740587738986053370
