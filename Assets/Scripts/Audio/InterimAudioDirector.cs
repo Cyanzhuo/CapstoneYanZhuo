@@ -73,8 +73,10 @@ namespace Game.Audio
 
         [Header("Movement")]
         [SerializeField] private AudioClip walkLoop;
+        [SerializeField] private AudioClip[] walkVariations;
         [SerializeField] private AudioClip crouchWalkLoop;
         [SerializeField] private AudioClip runLoop;
+        [SerializeField] private AudioClip[] runVariations;
         [SerializeField] private AudioClip slideLoop;
         [SerializeField] private AudioClip jumpClip;
         [SerializeField] private AudioClip doubleJumpClip;
@@ -113,6 +115,9 @@ namespace Game.Audio
 
         private readonly Dictionary<InterimAudioCue, float> lastCueTimes = new Dictionary<InterimAudioCue, float>();
         private float lastMovementReportTime = -99f;
+        private InterimAudioCue currentMovementCue = InterimAudioCue.None;
+        private int lastWalkVariationIndex = -1;
+        private int lastRunVariationIndex = -1;
         private const float MovementReportTimeout = 0.18f;
 
         public bool AudioEnabled => audioEnabled && isActiveAndEnabled;
@@ -303,7 +308,14 @@ namespace Game.Audio
             EnsureSources();
 
             InterimAudioCue cue = isCrouching ? InterimAudioCue.CrouchWalk : isRunning ? InterimAudioCue.Run : InterimAudioCue.Walk;
-            AudioClip clip = GetClip(cue);
+            lastMovementReportTime = Time.unscaledTime;
+            movementSource.transform.position = position;
+            movementSource.loop = false;
+            movementSource.pitch = Mathf.Clamp(speedRatio, 0.75f, 1.35f);
+
+            if (currentMovementCue == cue && movementSource.isPlaying) return;
+
+            AudioClip clip = GetMovementClip(cue);
 
             if (clip == null)
             {
@@ -311,13 +323,7 @@ namespace Game.Audio
                 return;
             }
 
-            lastMovementReportTime = Time.unscaledTime;
-            movementSource.transform.position = position;
-            movementSource.loop = true;
-            movementSource.pitch = Mathf.Clamp(speedRatio, 0.75f, 1.35f);
-
-            if (movementSource.clip == clip && movementSource.isPlaying) return;
-
+            currentMovementCue = cue;
             movementSource.clip = clip;
             movementSource.Play();
         }
@@ -325,6 +331,46 @@ namespace Game.Audio
         private void StopMovementLoop()
         {
             if (movementSource != null && movementSource.isPlaying) movementSource.Stop();
+            currentMovementCue = InterimAudioCue.None;
+        }
+
+        private AudioClip GetMovementClip(InterimAudioCue cue)
+        {
+            switch (cue)
+            {
+                case InterimAudioCue.Walk:
+                    return PickVariation(walkVariations, walkLoop, ref lastWalkVariationIndex);
+                case InterimAudioCue.Run:
+                    return PickVariation(runVariations, runLoop, ref lastRunVariationIndex);
+                default:
+                    return GetClip(cue);
+            }
+        }
+
+        private static AudioClip PickVariation(AudioClip[] variations, AudioClip fallback, ref int lastIndex)
+        {
+            if (variations == null || variations.Length == 0) return fallback;
+
+            int startIndex = Random.Range(0, variations.Length);
+
+            for (int offset = 0; offset < variations.Length; offset++)
+            {
+                int index = (startIndex + offset) % variations.Length;
+                AudioClip clip = variations[index];
+
+                if (clip != null && (index != lastIndex || variations.Length == 1))
+                {
+                    lastIndex = index;
+                    return clip;
+                }
+            }
+
+            if (lastIndex >= 0 && lastIndex < variations.Length && variations[lastIndex] != null)
+            {
+                return variations[lastIndex];
+            }
+
+            return fallback;
         }
 
         private bool ShouldSuppressDuplicate(InterimAudioCue cue)
@@ -413,7 +459,7 @@ namespace Game.Audio
 
         private void EnsureSources()
         {
-            movementSource = GetOrCreateSource(movementSource, "Movement Source", true, 0.7f);
+            movementSource = GetOrCreateSource(movementSource, "Movement Source", false, 0.7f);
             sfxSource = GetOrCreateSource(sfxSource, "SFX Source", false, 0f);
             uiSource = GetOrCreateSource(uiSource, "UI Source", false, 0f);
             bgmSource = GetOrCreateSource(bgmSource, "BGM Source", true, 0f);
@@ -467,11 +513,13 @@ namespace Game.Audio
 
         private void GuessInterimClips()
         {
-            AssignIfEmpty(ref walkLoop, "Slide");
+            AssignIfEmpty(ref walkLoop, "Stone Walk 1");
+            AssignIfEmpty(ref walkVariations, "Stone Walk 1", "Stone Walk 5");
             AssignIfEmpty(ref crouchWalkLoop, "Player Crouch");
-            AssignIfEmpty(ref runLoop, "Slide");
+            AssignIfEmpty(ref runLoop, "Stone Run 1");
+            AssignIfEmpty(ref runVariations, "Stone Run 1", "Stone Run 2", "Stone Run 3");
             AssignIfEmpty(ref slideLoop, "Slide");
-            AssignIfEmpty(ref jumpClip, "Jump");
+            AssignIfEmpty(ref jumpClip, "Stone Jump");
             AssignIfEmpty(ref doubleJumpClip, "Spike (Launcher, Jump, Late 2nd Jump) - 2nd Jump");
             AssignIfEmpty(ref dashClip, "Dash");
             AssignIfEmpty(ref playerCrouchClip, "Player Crouch");
@@ -503,6 +551,18 @@ namespace Game.Audio
             if (clip != null) return;
 
             clip = FindInterimClip(exactFileName);
+        }
+
+        private static void AssignIfEmpty(ref AudioClip[] clips, params string[] exactFileNames)
+        {
+            if (clips != null && clips.Length > 0) return;
+
+            clips = new AudioClip[exactFileNames.Length];
+
+            for (int i = 0; i < exactFileNames.Length; i++)
+            {
+                clips[i] = FindInterimClip(exactFileNames[i]);
+            }
         }
 
         private static AudioClip FindInterimClip(string exactFileName)

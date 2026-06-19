@@ -58,11 +58,18 @@ MonoBehaviour:
   sfxSource: {fileID: 0}
   uiSource: {fileID: 0}
   bgmSource: {fileID: 0}
-  walkLoop: {fileID: 8300000, guid: 387b7c29e882d7b468349ff7f88a029e, type: 3}
+  walkLoop: {fileID: 8300000, guid: 9598bef7850be84d9caa89c6eca5a010, type: 3}
+  walkVariations:
+  - {fileID: 8300000, guid: 9598bef7850be84d9caa89c6eca5a010, type: 3}
+  - {fileID: 8300000, guid: 24632951edebc2f74f1574dd60313838, type: 3}
   crouchWalkLoop: {fileID: 8300000, guid: ea3f737e23af63f45b41510150a7407a, type: 3}
-  runLoop: {fileID: 8300000, guid: 387b7c29e882d7b468349ff7f88a029e, type: 3}
+  runLoop: {fileID: 8300000, guid: 1b20d033561e2cbee871c7da8cf6e521, type: 3}
+  runVariations:
+  - {fileID: 8300000, guid: 1b20d033561e2cbee871c7da8cf6e521, type: 3}
+  - {fileID: 8300000, guid: abb37a84fbe6dff3021ff964d2efb939, type: 3}
+  - {fileID: 8300000, guid: b3532aff21af58b10ae7e79a9ff64cee, type: 3}
   slideLoop: {fileID: 8300000, guid: 387b7c29e882d7b468349ff7f88a029e, type: 3}
-  jumpClip: {fileID: 8300000, guid: fb81c5cb11a10b249b9003973cf2bee7, type: 3}
+  jumpClip: {fileID: 8300000, guid: f5c94197d675d073b407f879db0ac35e, type: 3}
   doubleJumpClip: {fileID: 8300000, guid: 624100cbb9cd0084f85813fd6a9f74a9, type: 3}
   dashClip: {fileID: 8300000, guid: 6dd33b5967dbeb64595e13e665f3dabb, type: 3}
   playerCrouchClip: {fileID: 8300000, guid: ea3f737e23af63f45b41510150a7407a, type: 3}
