@@ -1,137 +1,166 @@
 using System;
 using System.Reflection;
-using Game.Audio;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Menu : MonoBehaviour
 {
     [Header("Menu UI")]
     [SerializeField] private GameObject menuPanel;
 
-    [Header("Cursor")]
-    [SerializeField] private bool showCursorWhenPaused = true;
-    [SerializeField] private bool hideCursorDuringGameplay = true;
-
-    private bool isPaused = false;
+    private bool isMenuOpen = false;
 
     private void Start()
     {
-        ResumeGameInstant();
+        if (menuPanel != null)
+        {
+            menuPanel.SetActive(false);
+        }
+
+        Time.timeScale = 1f;
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+
+        ClearSelectedButton();
     }
 
     private void Update()
     {
         if (EscapePressed())
         {
-            TogglePause();
+            ToggleMenu();
         }
     }
 
-    private bool EscapePressed()
+    private void ToggleMenu()
     {
-        // New Input System support without directly importing UnityEngine.InputSystem
-        Type keyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
-
-        if (keyboardType != null)
-        {
-            PropertyInfo currentProperty = keyboardType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-            object keyboard = currentProperty?.GetValue(null);
-
-            if (keyboard != null)
-            {
-                PropertyInfo escapeKeyProperty = keyboardType.GetProperty("escapeKey", BindingFlags.Public | BindingFlags.Instance);
-                object escapeKey = escapeKeyProperty?.GetValue(keyboard);
-
-                if (escapeKey != null)
-                {
-                    PropertyInfo wasPressedProperty = escapeKey.GetType().GetProperty("wasPressedThisFrame", BindingFlags.Public | BindingFlags.Instance);
-
-                    if (wasPressedProperty != null)
-                    {
-                        return (bool)wasPressedProperty.GetValue(escapeKey);
-                    }
-                }
-            }
-        }
-
-        // Old Input fallback
-        try
-        {
-            return Input.GetKeyDown(KeyCode.Escape);
-        }
-        catch (InvalidOperationException)
-        {
-            return false;
-        }
-    }
-
-    public void TogglePause()
-    {
-        InterimAudioDirector.TryPlayUiClick();
-
-        if (isPaused)
+        if (isMenuOpen)
         {
             ResumeGame();
         }
         else
         {
-            PauseGame();
+            OpenMenu();
         }
     }
 
-    public void PauseGame()
+    private void OpenMenu()
     {
-        isPaused = true;
-        Time.timeScale = 0f;
+        isMenuOpen = true;
 
         if (menuPanel != null)
         {
             menuPanel.SetActive(true);
+            menuPanel.transform.SetAsLastSibling();
         }
 
-        if (showCursorWhenPaused)
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
+        Time.timeScale = 0f;
+
+        Cursor.visible = true;
+        Cursor.lockState = CursorLockMode.None;
+
+        ClearSelectedButton();
     }
 
     public void ResumeGame()
     {
-        isPaused = false;
-        Time.timeScale = 1f;
+        Debug.Log("Resume button clicked");
+
+        isMenuOpen = false;
+
+        ClearSelectedButton();
 
         if (menuPanel != null)
         {
             menuPanel.SetActive(false);
         }
-
-        if (hideCursorDuringGameplay)
+        else
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            Debug.LogWarning("Menu Panel is not assigned in Menu Manager.");
+        }
+
+        Time.timeScale = 1f;
+
+        Cursor.visible = false;
+        Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    private void ClearSelectedButton()
+    {
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
         }
     }
 
-    private void ResumeGameInstant()
+    private bool EscapePressed()
     {
-        isPaused = false;
-        Time.timeScale = 1f;
-
-        if (menuPanel != null)
+        if (EscapePressedNewInputSystem())
         {
-            menuPanel.SetActive(false);
+            return true;
         }
 
-        if (hideCursorDuringGameplay)
+        try
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            return Input.GetKeyDown(KeyCode.Escape);
+        }
+        catch
+        {
+            return false;
         }
     }
 
-    private void OnDestroy()
+    private bool EscapePressedNewInputSystem()
     {
-        Time.timeScale = 1f;
+        try
+        {
+            Type keyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
+
+            if (keyboardType == null)
+            {
+                return false;
+            }
+
+            PropertyInfo currentProperty = keyboardType.GetProperty(
+                "current",
+                BindingFlags.Public | BindingFlags.Static
+            );
+
+            object currentKeyboard = currentProperty.GetValue(null);
+
+            if (currentKeyboard == null)
+            {
+                return false;
+            }
+
+            PropertyInfo escapeKeyProperty = keyboardType.GetProperty(
+                "escapeKey",
+                BindingFlags.Public | BindingFlags.Instance
+            );
+
+            object escapeKey = escapeKeyProperty.GetValue(currentKeyboard);
+
+            if (escapeKey == null)
+            {
+                return false;
+            }
+
+            PropertyInfo wasPressedProperty = escapeKey.GetType().GetProperty(
+                "wasPressedThisFrame",
+                BindingFlags.Public | BindingFlags.Instance
+            );
+
+            if (wasPressedProperty == null)
+            {
+                return false;
+            }
+
+            return (bool)wasPressedProperty.GetValue(escapeKey);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
