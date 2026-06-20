@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8866e8bbb948a8147a9fe6c9a5d82ac7, type: 3}
-  m_Name: Bat
+  m_Name: Axe
   m_EditorClassIdentifier: Assembly-CSharp::Weapons
-  weaponName: Bat
-  weaponPrefab: {fileID: 8432393212067134968, guid: 97e097647bbef9043b488dcb47032cd4, type: 3}
-  hitboxLifetime: 0.2
-  normalDamage: 10
-  finisherDamage: 15
-  chargeDamage: 20
-  maxComboStage: 4
-  normalPayback: 10
-  finisherPayback: -10
-  chargePayback: -20
+  weaponName: Axe
+  weaponPrefab: {fileID: 6566871942137375219, guid: af53e3b5ba2913e4c9c6d5bc4daecccd, type: 3}
+  hitboxLifetime: 0.3
+  normalDamage: 15
+  finisherDamage: 20
+  chargeDamage: 25
+  maxComboStage: 3
+  normalPayback: 15
+  finisherPayback: -15
+  chargePayback: -25

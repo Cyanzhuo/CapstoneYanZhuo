@@ -5,6 +5,8 @@ public class Weapons : ScriptableObject
 {
     [Header("Damage Settings")]
     public string weaponName;
+    public GameObject weaponPrefab;
+    public float hitboxLifetime = 0.2f;
     public int normalDamage = 10;
     public int finisherDamage = 15;
     public int chargeDamage = 20;

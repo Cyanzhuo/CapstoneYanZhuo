@@ -19,6 +19,17 @@ public class Hitbox : MonoBehaviour
     {
         DeactivateHitbox();
     }
+    void Awake()
+    {
+        if (attack == null)
+        {
+            attack = FindFirstObjectByType<Attack>();
+        }
+        if (playerController == null)
+        {
+            playerController = FindFirstObjectByType<ThirdPersonController>();
+        }
+    }
     public void ActivateHitbox()
     {
         weaponCollider.enabled = true;

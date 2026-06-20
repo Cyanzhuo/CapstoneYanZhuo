@@ -18,7 +18,6 @@ public class Attack : MonoBehaviour
 
     [Header("Combo Settings")]
     public float finisherCooldownTime = 1f;
-    [SerializeField] private float hitboxLifetime = 0.1f;
     [SerializeField] private float shortCooldownTime = 0.25f;
     [SerializeField] private float windUpDuration = 0.2f;
     [SerializeField] private float aerialPushDuration = 0.25f;
@@ -46,7 +45,7 @@ public class Attack : MonoBehaviour
     [HideInInspector] public int chargeLevel = 0; // 0 = none, 1 = level 1, 2 = level 2
 
     [Header("Hitbox Reference")]
-    public Hitbox weaponHitbox; 
+    [HideInInspector] public Hitbox weaponHitbox;
 
     // Internal State Flags for the Hitbox to read
     public enum AttackType
@@ -392,7 +391,7 @@ public class Attack : MonoBehaviour
         // 3. Hitbox Activation
         // In the final game, this should be called via an Animation Event
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
 
         // 4. Lunge toward enemy (Magnetism)
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
@@ -506,7 +505,7 @@ public class Attack : MonoBehaviour
         appliedJuggleForce = force;
         currentAttackType = AttackType.Launcher;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
         // ... animation/effect logic ...
 
         float range = countsAsDashAttack ? dashRange : defaultRange;
@@ -635,7 +634,7 @@ public class Attack : MonoBehaviour
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         currentAttackType = AttackType.Spike;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
         // ... animation/effect logic ...
         
         float range = countsAsDashSlam ? dashRange : defaultRange;
@@ -670,7 +669,7 @@ public class Attack : MonoBehaviour
         PlayEffect(attackEffect);
         currentAttackType = AttackType.BoundSpike;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
         // ... animation/effect logic ...
         
         float range = countsAsDashSlam ? dashRange : defaultRange;
