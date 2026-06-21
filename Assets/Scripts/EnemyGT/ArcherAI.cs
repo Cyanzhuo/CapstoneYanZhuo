@@ -3,7 +3,7 @@ using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class ArcherAI : MonoBehaviour
+public class ArcherAI : MonoBehaviour, IEnemyAI
 {
     private NavMeshAgent agent;
     Rigidbody rb;
@@ -12,10 +12,6 @@ public class ArcherAI : MonoBehaviour
     [Header("Target")]
     [SerializeField] private Transform player;
     [SerializeField] private string playerTag = "Player";
-
-    [Header("Detection")]
-    [SerializeField] private float detectionRange = 12f;
-    [SerializeField] private float losePlayerRange = 18f;
 
     [Header("Idle")]
     [SerializeField] private float idleDuration = 1.5f;
@@ -38,7 +34,6 @@ public class ArcherAI : MonoBehaviour
 
     [Header("Retreat")]
     [SerializeField] private float retreatDuration = 0.8f;
-    [SerializeField] private float retreatSpeedMultiplier = 1.2f;
 
     [Header("Rotation")]
     [SerializeField] private float rotationSpeed = 12f;
@@ -116,8 +111,6 @@ public class ArcherAI : MonoBehaviour
 
         while (currentState == ArcherState.Idle)
         {
-            FindPlayer();
-
             if (player != null)
             {
                 currentState = ArcherState.MoveToRange;
@@ -145,8 +138,6 @@ public class ArcherAI : MonoBehaviour
 
         while (currentState == ArcherState.Patrol)
         {
-            FindPlayer();
-
             if (player != null)
             {
                 hasPatrolPoint = false;
@@ -187,13 +178,6 @@ public class ArcherAI : MonoBehaviour
             }
 
             float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-
-            if (distanceToPlayer > losePlayerRange)
-            {
-                player = null;
-                currentState = ArcherState.Idle;
-                yield break;
-            }
 
             FacePlayer();
 
@@ -285,7 +269,7 @@ public class ArcherAI : MonoBehaviour
             if (AgentReady())
             {
                 agent.isStopped = false;
-                agent.Move(retreatDirection * agent.speed * retreatSpeedMultiplier * Time.deltaTime);
+                agent.Move(retreatDirection * agent.speed * Time.deltaTime);
             }
 
             retreatTimer += Time.deltaTime;
@@ -297,33 +281,6 @@ public class ArcherAI : MonoBehaviour
             }
 
             yield return null;
-        }
-    }
-
-    private void FindPlayer()
-    {
-        if (player != null)
-        {
-            return;
-        }
-
-        Collider[] hits = Physics.OverlapSphere(transform.position, detectionRange);
-
-        foreach (Collider hit in hits)
-        {
-            if (hit.CompareTag(playerTag))
-            {
-                player = hit.transform;
-                return;
-            }
-
-            Transform root = hit.transform.root;
-
-            if (root.CompareTag(playerTag))
-            {
-                player = root;
-                return;
-            }
         }
     }
 
@@ -450,7 +407,14 @@ public class ArcherAI : MonoBehaviour
                 // Re-enable NavMesh agent and rigidbody
                 agent.enabled = true;
                 rb.isKinematic = true;
-                currentState = ArcherState.Idle;
+                if (player != null)
+                {
+                    currentState = ArcherState.MoveToRange;
+                }
+                else
+                {
+                    currentState = ArcherState.Idle;
+                }
                 yield break;
             }
 
@@ -458,11 +422,36 @@ public class ArcherAI : MonoBehaviour
         }
     }
 
+    public void OnPlayerDetected(Transform detectedPlayer)
+    {
+        player = detectedPlayer;
+        if (currentState == ArcherState.Idle || currentState == ArcherState.Patrol)
+        {
+            currentState = ArcherState.MoveToRange;
+        }
+    }
+
+    public void OnPlayerLost()
+    {
+        player = null;
+        if (currentState == ArcherState.MoveToRange || currentState == ArcherState.RangedAttack || currentState == ArcherState.Retreat)
+        {
+            currentState = ArcherState.Idle;
+        }
+    }
+
+    public void OnCounterTriggered()
+    {
+        currentState = ArcherState.RangedAttack;
+    }
+
+    public void EnterKnockbackState()
+    {
+        currentState = ArcherState.Knockback;
+    }
+
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, detectionRange);
-
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 

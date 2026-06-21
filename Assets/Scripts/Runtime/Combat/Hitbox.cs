@@ -59,24 +59,6 @@ public class Hitbox : MonoBehaviour
         playerController.availableChargeAttackJumps = 1;
     }
     
-    System.Collections.IEnumerator HitStop(float duration)
-    {
-        Time.timeScale = 0.01f; // Almost pause the game
-        yield return new WaitForSecondsRealtime(duration); // Wait in real time
-        Time.timeScale = 1f;
-        activeHitStop = null;
-    }
-
-    void StopHitStop()
-    {
-        if (activeHitStop != null)
-        {
-            StopCoroutine(activeHitStop);
-            Time.timeScale = 1f;
-            activeHitStop = null;
-        }
-    }
-
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Enemy"))
@@ -313,8 +295,7 @@ public class Hitbox : MonoBehaviour
                 InterimAudioDirector.TryPlayMove(GetHitCue(), other.transform.position);
 
                 // Apply hitstop
-                StopHitStop(); // Stop any existing hitstop before starting a new one
-                activeHitStop = StartCoroutine(HitStop(hitStopDuration));
+                HitStopManager.TriggerHitStop(hitStopDuration);
             }
         }
     }

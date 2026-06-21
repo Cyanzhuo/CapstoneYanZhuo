@@ -2,18 +2,18 @@ using UnityEngine;
 
 public class EnemyDetectionTrigger : MonoBehaviour
 {
-    private Chaser chaser;
+    private IEnemyAI enemyAI;
     
     void Start()
     {
-        chaser = GetComponentInParent<Chaser>();
+        enemyAI = GetComponentInParent<IEnemyAI>();
     }
     
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Player"))
         {
-            chaser.OnPlayerDetected(other.transform);
+            enemyAI.OnPlayerDetected(other.transform);
         }
     }
     
@@ -21,7 +21,7 @@ public class EnemyDetectionTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            chaser.OnPlayerLost();
+            enemyAI.OnPlayerLost();
         }
     }
 }

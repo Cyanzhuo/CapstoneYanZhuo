@@ -3,7 +3,7 @@ using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Chaser : MonoBehaviour
+public class Chaser : MonoBehaviour, IEnemyAI
 {
     NavMeshAgent myAgent;
     Rigidbody rb;
@@ -265,7 +265,14 @@ public class Chaser : MonoBehaviour
                 // Re-enable NavMesh agent and rigidbody
                 myAgent.enabled = true;
                 rb.isKinematic = true;
-                SwitchState(State.Idle);
+                if (targetTransform != null)
+                {
+                    SwitchState(State.FocusOnTarget);
+                }
+                else
+                {
+                    SwitchState(State.Idle);
+                }
                 yield break;
             }
 
@@ -306,6 +313,16 @@ public class Chaser : MonoBehaviour
         {
             SwitchState(State.Idle);
         }
+    }
+
+    public void OnCounterTriggered()
+    {
+        SwitchState(Chaser.State.Attack);
+    }
+
+    public void EnterKnockbackState()
+    {
+        SwitchState(Chaser.State.Knockback);
     }
 
     void OnDrawGizmos()
