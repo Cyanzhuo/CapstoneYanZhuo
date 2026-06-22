@@ -2,7 +2,9 @@
     "name": "Game.UI",
     "rootNamespace": "",
     "references": [
-        "GUID:5813795fbf9840f196dbd43aae234efd"
+        "GUID:5813795fbf9840f196dbd43aae234efd",
+        "GUID:a1fcf98df0264a14b6969986327fbcf0",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

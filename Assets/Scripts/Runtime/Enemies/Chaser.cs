@@ -1,27 +1,39 @@
 using System.Collections;
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class Chaser : MonoBehaviour
+public class Chaser : MonoBehaviour, IEnemyAI
 {
     NavMeshAgent myAgent;
     Rigidbody rb;
     EnemyBehaviour enemyBehaviour;
+    [SerializeField] EnemyHitbox hitbox;
+
+    [Header("Audio")]
+    [SerializeField] private InterimAudioCue attackStartCue = InterimAudioCue.BasicAttack;
+    [SerializeField] private InterimAudioCue attackHitCue = InterimAudioCue.BasicAttackHit;
 
     [SerializeField] Transform targetTransform;
     [SerializeField] LayerMask playerLayer;
     [SerializeField] float playerProximityThreshold = 1f;
     [SerializeField] Transform centerPoint;
-    [SerializeField] float searchRadius = 5f;
     [SerializeField] Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f);
-    [SerializeField] Transform[] patrolPoints; // Array of patrol points (using Transforms for easy scene placement)
     [SerializeField] float idleDuration = 3f; // Time to stay in Idle state before patrolling
     [SerializeField] float focusDuration = 5f; // Time to stay in FocusOnTarget state
     [SerializeField] float retreatDuration = 2f; // Time to stay in Retreat state
     [SerializeField] float directionChangeInterval = 3f; // Time interval to change circling direction in FocusOnTarget state
-    [SerializeField] float rotationSpeed = 60f;
+    [SerializeField] float rotationSpeed = 60f; // Speed at which the enemy rotates to face the target in FocusOnTarget state
+    [SerializeField] float minRadius = 3f; // Minimum radius to maintain while circling the target
+    private float orbitAngle = 0f;
 
-    int currentPatrolIndex = 0;
+    [Header("Random Patrol")]
+    [SerializeField] private float patrolRange = 5f;  // How far from start position to roam
+    [SerializeField] private float patrolRadius = 5f;  // Search radius for NavMesh sampling
+    private Vector3 startPosition;
+    private Vector3 currentPatrolPoint;
+    private bool hasPatrolPoint;
+
     public enum State
     {
         Idle, Patrol, FocusOnTarget, ChaseTarget, Attack, Retreat, Knockback
@@ -33,53 +45,70 @@ public class Chaser : MonoBehaviour
         myAgent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
         enemyBehaviour = GetComponent<EnemyBehaviour>();
+
+        if (hitbox != null)
+        {
+            hitbox.SetHitCue(attackHitCue);
+        }
     }
 
     void Start()
     {
-        StartCoroutine(SwitchState(State.Idle));
+        startPosition = transform.position;
+        SwitchState(State.Idle);
+        StartCoroutine(StateMachine());
         rb.isKinematic = true; // Start with kinematic rigidbody for NavMeshAgent control
     }
 
     void Update()
     {
-        Collider[] player = Physics.OverlapSphere(centerPoint.position, searchRadius, playerLayer);
-        if (player.Length > 0)
+        if (currentState != State.FocusOnTarget && orbitAngle != 0f)
         {
-            targetTransform = player[0].transform;
-        }
-         else
-        {
-            targetTransform = null;
-        }
-        Vector3 boxCenter = centerPoint.position + transform.forward * playerProximityThreshold;
-        Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, playerLayer);
-        if (hits.Length > 0 && currentState == State.ChaseTarget)
-        {
-            StartCoroutine(SwitchState(State.Attack));
+            orbitAngle = 0f; // Reset orbit angle when not in FocusOnTarget state
         }
     }
 
-    public IEnumerator SwitchState(State newState)
+    public void SwitchState(State newState)
     {
         if (currentState == newState)
         {
-            yield break; // Exit if the state is already the same
+            return; // Exit if the state is already the same
         }
 
         currentState = newState;
+    }
 
-        StartCoroutine(newState switch
+    private IEnumerator StateMachine()
+    {
+        while (true)
         {
-            State.Idle => Idle(),
-            State.FocusOnTarget => FocusOnTarget(),
-            State.ChaseTarget => ChaseTarget(),
-            State.Attack => Attack(),
-            State.Retreat => Retreat(),
-            State.Patrol => Patrol(),
-            State.Knockback => Knockback(),
-            _ => null
-        });
+            switch (currentState)
+            {
+                case State.Idle:
+                    yield return StartCoroutine(Idle());
+                    break;
+                case State.Patrol:
+                    yield return StartCoroutine(Patrol());
+                    break;
+                case State.FocusOnTarget:
+                    yield return StartCoroutine(FocusOnTarget());
+                    break;
+                case State.ChaseTarget:
+                    yield return StartCoroutine(ChaseTarget());
+                    break;
+                case State.Attack:
+                    yield return StartCoroutine(Attack());
+                    break;
+                case State.Retreat:
+                    yield return StartCoroutine(Retreat());
+                    break;
+                case State.Knockback:
+                    yield return StartCoroutine(Knockback());
+                    break;
+            }
+
+            yield return null;
+        }
     }
 
     IEnumerator Idle()
@@ -88,20 +117,12 @@ public class Chaser : MonoBehaviour
         
         while (currentState == State.Idle)
         {
-            // Perform idle behavior here
-            if (targetTransform != null)
-            {
-                // If there is a target, go to the chasing state
-                StartCoroutine(SwitchState(State.FocusOnTarget));
-                yield break;
-            }
-
             idleTimer += Time.deltaTime;
 
             // After idleDuration seconds, switch to Patrol state
-            if (idleTimer >= idleDuration && patrolPoints.Length > 0)
+            if (idleTimer >= idleDuration)
             {
-                StartCoroutine(SwitchState(State.Patrol));
+                SwitchState(State.Patrol);
                 yield break;
             }
 
@@ -117,12 +138,6 @@ public class Chaser : MonoBehaviour
         // make the enemy turn to face the player and pace slowly around the player
         while (currentState == State.FocusOnTarget)
         {
-            if (targetTransform == null)
-            {
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
-            }
-
             notAttackingTimer += Time.deltaTime;
             directionChangeTimer += Time.deltaTime;
 
@@ -140,13 +155,13 @@ public class Chaser : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
 
             // Move around the target in a circle
-            Vector3 perpendicular = Vector3.Cross(Vector3.up, directionToTarget.normalized);
-            Vector3 offset = perpendicular * circleDirection * directionToTarget.magnitude;
+            orbitAngle += Time.deltaTime * circleDirection;
+            Vector3 offset = new Vector3(Mathf.Cos(orbitAngle), 0, Mathf.Sin(orbitAngle)) * Mathf.Max(directionToTarget.magnitude, minRadius);
             myAgent.SetDestination(targetTransform.position + offset);
 
             if (notAttackingTimer >= focusDuration)
             {
-                StartCoroutine(SwitchState(State.ChaseTarget));
+                SwitchState(State.ChaseTarget);
                 yield break;
             }
             yield return null;
@@ -159,14 +174,15 @@ public class Chaser : MonoBehaviour
         while (currentState == State.ChaseTarget)
         {
             // Perform chasing behavior here
-            if (targetTransform == null)
-            {
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
-            }
-            else
+            if (targetTransform != null)
             {
                 myAgent.SetDestination(targetTransform.position);
+                Vector3 boxCenter = centerPoint.position + transform.forward * playerProximityThreshold;
+                Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, transform.rotation, playerLayer);
+                if (hits.Length > 0)
+                {
+                    SwitchState(State.Attack);
+                }
             }
             
             yield return null;
@@ -175,9 +191,12 @@ public class Chaser : MonoBehaviour
 
     IEnumerator Attack()
     {
+        InterimAudioDirector.TryPlayMove(attackStartCue, transform.position);
+        hitbox.ActivateHitbox();
         // Wait for attack animation to finish before switching to retreat
         yield return new WaitForSeconds(1f); // Placeholder for attack duration
-        StartCoroutine(SwitchState(State.Retreat));
+        hitbox.DeactivateHitbox();
+        SwitchState(State.Retreat);
         yield break;
     }
     
@@ -189,10 +208,9 @@ public class Chaser : MonoBehaviour
         {
             if (targetTransform == null)
             {
-                StartCoroutine(SwitchState(State.Idle));
+                SwitchState(State.Idle);
                 yield break;
             }
-
             // Move backwards away from the target
             Vector3 retreatDirection = (transform.position - targetTransform.position).normalized;
             myAgent.Move(retreatDirection * myAgent.speed * Time.deltaTime);
@@ -200,7 +218,7 @@ public class Chaser : MonoBehaviour
             retreatTimer += Time.deltaTime;
             if (retreatTimer >= retreatDuration)
             {
-                StartCoroutine(SwitchState(State.FocusOnTarget));
+                SwitchState(State.FocusOnTarget);
                 yield break;
             }
 
@@ -210,32 +228,25 @@ public class Chaser : MonoBehaviour
 
     IEnumerator Patrol()
     {
-        // Make sure we have patrol points
-        if (patrolPoints.Length == 0)
-        {
-            StartCoroutine(SwitchState(State.Idle));
-            yield break;
-        }
-
-        // Set destination to current patrol point
-        myAgent.SetDestination(patrolPoints[currentPatrolIndex].position);
-
         while (currentState == State.Patrol)
         {
-            // Check if we've reached the patrol point
-            if (!myAgent.pathPending && myAgent.remainingDistance <= myAgent.stoppingDistance)
+            // Set destination to current patrol point
+            if (!hasPatrolPoint)
             {
-                // Move to next patrol point (with wrap-around)
-                currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length;
-                StartCoroutine(SwitchState(State.Idle));
-                yield break;
+                FindRandomPatrolPoint();
             }
 
-            // Check if we see the player
-            if (targetTransform != null)
+            if (hasPatrolPoint)
             {
-                StartCoroutine(SwitchState(State.FocusOnTarget));
-                yield break;
+                myAgent.SetDestination(currentPatrolPoint);
+
+                // Check if we've reached the patrol point
+                if (!myAgent.pathPending && myAgent.remainingDistance <= myAgent.stoppingDistance)
+                {
+                    hasPatrolPoint = false; // Need to find a new patrol point
+                    SwitchState(State.Idle);
+                    yield break;
+                }
             }
 
             yield return null;
@@ -254,7 +265,14 @@ public class Chaser : MonoBehaviour
                 // Re-enable NavMesh agent and rigidbody
                 myAgent.enabled = true;
                 rb.isKinematic = true;
-                StartCoroutine(SwitchState(State.Idle));
+                if (targetTransform != null)
+                {
+                    SwitchState(State.FocusOnTarget);
+                }
+                else
+                {
+                    SwitchState(State.Idle);
+                }
                 yield break;
             }
 
@@ -262,10 +280,53 @@ public class Chaser : MonoBehaviour
         }
     }
 
+    private void FindRandomPatrolPoint()
+    {
+        Vector3 randomDirection = Random.insideUnitSphere * patrolRange;
+        randomDirection += startPosition;
+
+        NavMeshHit hit;
+        if (NavMesh.SamplePosition(randomDirection, out hit, patrolRadius, NavMesh.AllAreas))
+        {
+            currentPatrolPoint = hit.position;
+            hasPatrolPoint = true;
+        }
+        else
+        {
+            hasPatrolPoint = false; // Failed to find a valid patrol point
+        }
+    }
+
+    public void OnPlayerDetected(Transform player)
+    {
+        targetTransform = player;
+        if (currentState == State.Idle || currentState == State.Patrol)
+        {
+            SwitchState(State.FocusOnTarget);
+        }
+    }
+
+    public void OnPlayerLost()
+    {
+        targetTransform = null;
+        if (currentState == State.FocusOnTarget || currentState == State.ChaseTarget || currentState == State.Attack || currentState == State.Retreat)
+        {
+            SwitchState(State.Idle);
+        }
+    }
+
+    public void OnCounterTriggered()
+    {
+        SwitchState(Chaser.State.Attack);
+    }
+
+    public void EnterKnockbackState()
+    {
+        SwitchState(Chaser.State.Knockback);
+    }
+
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(centerPoint.position, searchRadius);
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(centerPoint.position + transform.forward * playerProximityThreshold, attackBoxSize);
     }

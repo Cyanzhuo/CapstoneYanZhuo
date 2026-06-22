@@ -7,6 +7,7 @@
 * The door can be toggled between open and closed states, with visual feedback provided through a DoorLockVisual component.
 */
 
+using Game.Audio;
 using UnityEngine;
 
 public class DoorBehaviour : MonoBehaviour
@@ -81,7 +82,7 @@ public class DoorBehaviour : MonoBehaviour
         if (isOpen)
         {
             // Play the door sound
-            if (doorAudioSource != null)
+            if (!InterimAudioDirector.TryPlayInteraction(InterimAudioCue.Interact, transform.position) && doorAudioSource != null)
             {
                 doorAudioSource.Play();
             }
@@ -92,7 +93,7 @@ public class DoorBehaviour : MonoBehaviour
         else
         {
             // Play the door sound
-            if (doorAudioSource != null)
+            if (!InterimAudioDirector.TryPlayInteraction(InterimAudioCue.Interact, transform.position) && doorAudioSource != null)
             {
                 doorAudioSource.Play();
             }

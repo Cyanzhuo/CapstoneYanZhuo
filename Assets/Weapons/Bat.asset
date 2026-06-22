@@ -13,7 +13,12 @@ MonoBehaviour:
   m_Name: Bat
   m_EditorClassIdentifier: Assembly-CSharp::Weapons
   weaponName: Bat
+  weaponPrefab: {fileID: 8432393212067134968, guid: 97e097647bbef9043b488dcb47032cd4, type: 3}
+  hitboxLifetime: 0.2
   normalDamage: 10
   finisherDamage: 15
   chargeDamage: 20
   maxComboStage: 4
+  normalPayback: 10
+  finisherPayback: -10
+  chargePayback: -20

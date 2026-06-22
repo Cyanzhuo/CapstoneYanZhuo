@@ -6,6 +6,7 @@
 * It also applies a force to the player to move them towards the enemy when attacking.
 */
 
+using Game.Audio;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using System.Collections;
@@ -16,18 +17,18 @@ public class Attack : MonoBehaviour
     public Weapons currentWeapon;
 
     [Header("Combo Settings")]
-    public float comboResetTime = 1f;
     public float finisherCooldownTime = 1f;
-    [SerializeField] private float hitboxLifetime = 0.1f;
     [SerializeField] private float shortCooldownTime = 0.25f;
     [SerializeField] private float windUpDuration = 0.2f;
     [SerializeField] private float aerialPushDuration = 0.25f;
 
     [Header("Attack Physics")]
-    public float defaultRange = 1f;
-    public float dashRange = 2f;
-    public float enemyProximityThreshold = 0.3f; // How close the enemy needs to be to trigger StopAttacking()
-    public Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f); // Size of the box for enemy detection during attacks
+    [SerializeField] private float defaultRange = 1f;
+    [SerializeField] private float dashRange = 2f;
+    [SerializeField] private float enemyProximityThreshold = 0.3f; // How close the enemy needs to be to trigger StopAttacking()
+    [SerializeField] private Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f); // Size of the box for enemy detection during attacks
+    [SerializeField] private float verticalExclusionAngle = 30f;
+    [SerializeField] private float horizontalExclusionAngle = 45f;
     public float defaultForce = 5f;
     public float dashForce = 10f;
     [SerializeField] public float launcherForce = 7f;
@@ -38,13 +39,13 @@ public class Attack : MonoBehaviour
     public LayerMask enemyLayer;
 
     [Header("Charge Attack")]
-    public float chargeThreshold = 0.5f; // How long to hold for charge level 1
-    public float chargeLevel2Threshold = 1f; // How long to hold for charge level 2
+    [SerializeField] private float chargeThreshold = 0.5f; // How long to hold for charge level 1
+    [SerializeField] private float chargeLevel2Threshold = 1f; // How long to hold for charge level 2
     [HideInInspector] public float attackPressTime; // When the button was first pressed
     [HideInInspector] public int chargeLevel = 0; // 0 = none, 1 = level 1, 2 = level 2
 
     [Header("Hitbox Reference")]
-    public Hitbox weaponHitbox; 
+    [HideInInspector] public Hitbox weaponHitbox;
 
     // Internal State Flags for the Hitbox to read
     public enum AttackType
@@ -75,8 +76,7 @@ public class Attack : MonoBehaviour
 
     // Internal State
     private int attackStage = 0;
-    private float lastAttackTime;
-    private float cooldownTimer;
+    [HideInInspector] public float cooldownTimer;
     private float attackDurationTimer;
     private bool hasPerformedChargedAttack;
     [HideInInspector] public bool isInCooldown;
@@ -86,6 +86,7 @@ public class Attack : MonoBehaviour
     private float windUpTimer;
     public Coroutine groundSlamLandingCoroutine;
     private Vector3 directionToEnemy;
+    private bool hasAppliedAirBoost = false;
 
     // Helper property for chest-level origin
     private Vector3 AttackOrigin => transform.position + Vector3.up * 0.6f;
@@ -149,13 +150,7 @@ public class Attack : MonoBehaviour
             }
         }
 
-        // Reset combo if player idles too long
-        if (attackStage > 0 && Time.time > lastAttackTime + comboResetTime && !isInCooldown)
-        {
-            ResetCombo();
-        }
-
-        if (isInCooldown)
+        if ((attackStage > 0 || isInCooldown) && (!playerController.isAttacking || playerController.attackHasSetEndTime))
         {
             cooldownTimer -= Time.deltaTime;
             if (cooldownTimer <= 0)
@@ -181,12 +176,14 @@ public class Attack : MonoBehaviour
 
             if (holdDuration >= chargeLevel2Threshold && chargeLevel < 2)
             {
+                InterimAudioDirector.TryPlayMove(InterimAudioCue.Charge, transform.position);
                 PlayEffect(chargeEffect);
                 Debug.Log("Charge Level 2!");
                 chargeLevel = 2;
             }
             else if (holdDuration >= chargeThreshold && chargeLevel < 1)
             {
+                InterimAudioDirector.TryPlayMove(InterimAudioCue.Charge, transform.position);
                 PlayEffect(chargeEffect);
                 Debug.Log("Charge Level 1!");
                 chargeLevel = 1;
@@ -354,7 +351,7 @@ public class Attack : MonoBehaviour
     #region Core Attack Logic
     private void ProcessCombo()
     {
-        lastAttackTime = Time.time;
+        cooldownTimer = finisherCooldownTime;
         isFinisher = (attackStage == currentWeapon.maxComboStage - 1);
 
         ExecuteAttack(isFinisher, false);
@@ -364,7 +361,6 @@ public class Attack : MonoBehaviour
         if (isFinisher)
         {
             isInCooldown = true;
-            cooldownTimer = finisherCooldownTime;
         }
     }
 
@@ -389,34 +385,32 @@ public class Attack : MonoBehaviour
         float force = countsAsDashAttack ? dashForce : defaultForce;
 
         // 2. Visuals
+        InterimAudioDirector.TryPlayMove(isCharging ? InterimAudioCue.ChargedAttack : InterimAudioCue.BasicAttack, transform.position);
         PlayEffect((isFinisher || isCharging) ? finisherEffect : attackEffect);
         
         // 3. Hitbox Activation
         // In the final game, this should be called via an Animation Event
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
 
         // 4. Lunge toward enemy (Magnetism)
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        bool hasValidTarget = false;
         if (hits.Length > 0)
         {
             GameObject target = GetBestTarget(hits);
-            LungeAtTarget(target, force);
-            playerController.LockOnTarget(target);
+            if (target != null)
+            {
+                LungeAtTarget(target, force);
+                playerController.LockOnTarget(target);
+                hasValidTarget = true;
+            }
         }
-        else
+        if (!hasValidTarget)
         {
             if (countsAsDashAttack)
             {
-                // 1. Determine the direction of the dash attack
-                // We use dashDirection if it exists, otherwise fall back to player forward
-                Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
-
-                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
-                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
-                {
-                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
-                }
+                ApplyDashPhysics();
             }
             if (!playerController.IsGrounded)
             {
@@ -441,12 +435,31 @@ public class Attack : MonoBehaviour
         GameObject bestTarget = null;
         float closestAngle = -1f; // Dot product range is -1 to 1 (1 is perfect alignment)
 
+        Vector3 moveDir = playerController.GetCameraRelativeDirection(playerController.moveInput);
+        Vector3 aimDir = (moveDir != Vector3.zero) ? moveDir.normalized : transform.forward;
+        Vector3 behindCheckDir = (moveDir != Vector3.zero) ? -moveDir.normalized : Vector3.zero;
+        
         foreach (var hit in hits)
         {
-            Vector3 directionToEnemy = (hit.transform.position - transform.position).normalized;
-            directionToEnemy.y = 0; // Ignore height differences for the "angle" check
+            Vector3 directionToEnemy = hit.transform.position - transform.position;
+            
+            // Calculate vertical angle (starting from horizontal plane)
+            float verticalAngle = Mathf.Abs(Mathf.Asin(directionToEnemy.normalized.y) * Mathf.Rad2Deg);
+            
+            // Skip enemies above the threshold
+            if (verticalAngle > (90 - verticalExclusionAngle)) continue;
+            
+            directionToEnemy.y = 0;
+            directionToEnemy.Normalize();
 
-            float dot = Vector3.Dot(transform.forward, directionToEnemy);
+            // Skip enemies directly behind
+            if (behindCheckDir != Vector3.zero)
+            {
+                float behindDot = Vector3.Dot(behindCheckDir, directionToEnemy);
+                if (behindDot > Mathf.Cos(horizontalExclusionAngle * Mathf.Deg2Rad)) continue;
+            }
+            
+            float dot = Vector3.Dot(aimDir, directionToEnemy);
 
             // Higher dot product means the enemy is more "in front" of the player
             if (dot > closestAngle)
@@ -464,7 +477,12 @@ public class Attack : MonoBehaviour
         Transform centrePoint = target.transform.Find("EnemyCentrePoint");
         if (!centrePoint) return;
 
-        directionToEnemy = (centrePoint.position - AttackOrigin).normalized;
+        // Add targeting offset (aim at the front of the enemy, not the centre)
+        Vector3 directDirectionToEnemy = (centrePoint.position - AttackOrigin).normalized;
+        // Now that we have the direct direction to the enemy, we can apply an offset to it to aim at the front of the enemy
+        Vector3 offset = directDirectionToEnemy * enemyProximityThreshold;
+        Vector3 targetPosition = centrePoint.position - offset;
+        directionToEnemy = (targetPosition - AttackOrigin).normalized;
         
         playerController.SetAttackForce(directionToEnemy, force, true);
     }
@@ -473,45 +491,43 @@ public class Attack : MonoBehaviour
     #region Special Moves
     private void ProcessLauncher(float force)
     {
-        Launcher(force, true);
-
         bool countsAsDashAttack = playerController.WasRecentlyDashing(0.1f);
-        float range = countsAsDashAttack ? dashRange : defaultRange;
-        Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
-        if (hits.Length > 0)
-        {
-            GameObject target = GetBestTarget(hits);
-            playerController.LockOnTarget(target);
-            if (countsAsDashAttack)
-            {
-                LungeAtTarget(target, dashForce);
-            }
-        }
-        else
-        {
-            if (countsAsDashAttack)
-            {
-                // 1. Determine the direction of the dash attack
-                // We use dashDirection if it exists, otherwise fall back to player forward
-                Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
-
-                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
-                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
-                {
-                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
-                }
-            }
-        }
+        Launcher(force, true, countsAsDashAttack);
     }
 
-    private void Launcher(float force, bool shouldTriggerCooldown)
+    private void Launcher(float force, bool shouldTriggerCooldown, bool countsAsDashAttack = false)
     {
+        InterimAudioDirector.TryPlayMove(
+            isCharging ? InterimAudioCue.ChargedCrouchAttack : InterimAudioCue.LauncherJump,
+            transform.position
+        );
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         appliedJuggleForce = force;
         currentAttackType = AttackType.Launcher;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
         // ... animation/effect logic ...
+
+        float range = countsAsDashAttack ? dashRange : defaultRange;
+        Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        bool hasValidTarget = false;
+        if (hits.Length > 0)
+        {
+            GameObject target = GetBestTarget(hits);
+            if (target != null)
+            {
+                playerController.LockOnTarget(target);
+                if (countsAsDashAttack)
+                {
+                    LungeAtTarget(target, dashForce);
+                }
+                hasValidTarget = true;
+            }
+        }
+        if (!hasValidTarget && countsAsDashAttack)
+        {
+            ApplyDashPhysics();
+        }
         
         if (shouldTriggerCooldown)
         {
@@ -525,7 +541,7 @@ public class Attack : MonoBehaviour
                 cooldownTimer = shortCooldownTime;
             }
         }
-        else // For chain launchers, set the attack stage to 1 for extending combos
+        else
         {
             ResetCombo();
         }
@@ -551,6 +567,7 @@ public class Attack : MonoBehaviour
         playerController.freezeRotation = true;
         playerController.pauseFastFall = false;
         rb.AddForce(Vector3.down * 10f, ForceMode.Impulse);
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.GroundSlamJump, transform.position);
         PlayEffect(attackEffect);
         if (countsAsDashSlam)
         {
@@ -602,6 +619,7 @@ public class Attack : MonoBehaviour
             playerController.SetSlideVelocity(transform.forward * Mathf.Max(playerController.slideVelocity.magnitude, bounceForce)); // Maintain momentum from dash slam after landing
         }
 
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.GroundSlamHit, transform.position);
         StopHitbox();
         isInCooldown = true;
         cooldownTimer = shortCooldownTime;
@@ -612,37 +630,32 @@ public class Attack : MonoBehaviour
     private void Spike()
     {
         windingUpSlam = false;
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.SpikeSecondJump, transform.position);
         PlayEffect(isCharging ? finisherEffect : attackEffect);
         currentAttackType = AttackType.Spike;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
         // ... animation/effect logic ...
         
         float range = countsAsDashSlam ? dashRange : defaultRange;
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        bool hasValidTarget = false;
         if (hits.Length > 0)
         {
             GameObject target = GetBestTarget(hits);
-            playerController.LockOnTarget(target);
-            if (countsAsDashSlam)
+            if (target != null)
             {
-                LungeAtTarget(target, dashForce);
+                playerController.LockOnTarget(target);
+                if (countsAsDashSlam)
+                {
+                    LungeAtTarget(target, dashForce);
+                }
+                hasValidTarget = true;
             }
         }
-        else
+        if (!hasValidTarget && countsAsDashSlam)
         {
-            if (countsAsDashSlam)
-            {
-                // 1. Determine the direction of the dash attack
-                // We use dashDirection if it exists, otherwise fall back to player forward
-                Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
-
-                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
-                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
-                {
-                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
-                }
-            }
+            ApplyDashPhysics();
         }
 
         isInCooldown = true;
@@ -652,37 +665,32 @@ public class Attack : MonoBehaviour
     private void BoundSpike()
     {
         windingUpSlam = false;
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.ChargedAttack, transform.position);
         PlayEffect(attackEffect);
         currentAttackType = AttackType.BoundSpike;
         weaponHitbox.ActivateHitbox();
-        attackDurationTimer = hitboxLifetime;
+        attackDurationTimer = currentWeapon.hitboxLifetime;
         // ... animation/effect logic ...
         
         float range = countsAsDashSlam ? dashRange : defaultRange;
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
+        bool hasValidTarget = false;
         if (hits.Length > 0)
         {
             GameObject target = GetBestTarget(hits);
-            playerController.LockOnTarget(target);
-            if (countsAsDashSlam)
+            if (target != null)
             {
-                LungeAtTarget(target, dashForce);
+                playerController.LockOnTarget(target);
+                if (countsAsDashSlam)
+                {
+                    LungeAtTarget(target, dashForce);
+                }
+                hasValidTarget = true;
             }
         }
-        else
+        if (!hasValidTarget && countsAsDashSlam)
         {
-            if (countsAsDashSlam)
-            {
-                // 1. Determine the direction of the dash attack
-                // We use dashDirection if it exists, otherwise fall back to player forward
-                Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
-
-                // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
-                if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
-                {
-                    playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
-                }
-            }
+            ApplyDashPhysics();
         }
 
         isInCooldown = true;
@@ -692,6 +700,7 @@ public class Attack : MonoBehaviour
     private void AerialPush()
     {
         windingUpSlam = false;
+        InterimAudioDirector.TryPlayMove(InterimAudioCue.AerialPush, transform.position);
         PlayEffect(attackEffect);
         weaponHitbox.ActivateHitbox();
         attackDurationTimer = aerialPushDuration;
@@ -749,6 +758,7 @@ public class Attack : MonoBehaviour
     {
         currentAttackType = AttackType.None;
         isFinisher = false;
+        hasAppliedAirBoost = false;
         weaponHitbox.DeactivateHitbox();
         playerController.StopAttacking();
         playerController.UnlockTarget();
@@ -761,7 +771,20 @@ public class Attack : MonoBehaviour
         chargeLevel = 0;
     }
 
-    // Used to stop attack lunge instead of weapon hitbox, since wind-up animation has the weapon to the side
+    private void ApplyDashPhysics()
+    {
+        // 1. Determine the direction of the dash attack
+        // We use dashDirection if it exists, otherwise fall back to player forward
+        Vector3 dashAtkDir = (playerController.dashDirection != Vector3.zero) ? playerController.dashDirection : transform.forward;
+
+        // 2. CAPPING LOGIC: If slide velocity is less than dash speed, floor it at dash speed
+        if (playerController.slideVelocity.magnitude < playerController.dashSpeed)
+        {
+            playerController.SetSlideVelocity(dashAtkDir * playerController.dashSpeed);
+        }
+    }
+
+    // Used to stop attack lunge
     private void ManageEnemyDetection()
     {
         Vector3 boxCenter = AttackOrigin + transform.forward * enemyProximityThreshold;
@@ -774,6 +797,21 @@ public class Attack : MonoBehaviour
         {
             playerController.StopAttacking();
             directionToEnemy = Vector3.zero; // Reset direction after successfully hitting an enemy
+            if (!playerController.IsGrounded && !hasAppliedAirBoost)
+            {
+                if (currentAttackType == AttackType.Charged)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
+                    rb.AddForce(Vector3.up * playerController.doubleJumpForce, ForceMode.Impulse);
+                    hasAppliedAirBoost = true;
+                }
+                else if (currentAttackType == AttackType.Normal ||
+                        currentAttackType == AttackType.Finisher)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(playerController.slowFallSpeed, rb.linearVelocity.y), rb.linearVelocity.z);
+                    hasAppliedAirBoost = true;
+                }
+            }
         }
 
         // If you miss, wait for there to be no enemies in attack range before stopping the lunge

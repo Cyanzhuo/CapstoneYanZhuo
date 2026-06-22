@@ -1,3 +1,4 @@
+using Game.Audio;
 using UnityEngine;
 using System.Collections.Generic;
 
@@ -17,6 +18,17 @@ public class Hitbox : MonoBehaviour
     void Start()
     {
         DeactivateHitbox();
+    }
+    void Awake()
+    {
+        if (attack == null)
+        {
+            attack = FindFirstObjectByType<Attack>();
+        }
+        if (playerController == null)
+        {
+            playerController = FindFirstObjectByType<ThirdPersonController>();
+        }
     }
     public void ActivateHitbox()
     {
@@ -47,24 +59,6 @@ public class Hitbox : MonoBehaviour
         playerController.availableChargeAttackJumps = 1;
     }
     
-    System.Collections.IEnumerator HitStop(float duration)
-    {
-        Time.timeScale = 0.01f; // Almost pause the game
-        yield return new WaitForSecondsRealtime(duration); // Wait in real time
-        Time.timeScale = 1f;
-        activeHitStop = null;
-    }
-
-    void StopHitStop()
-    {
-        if (activeHitStop != null)
-        {
-            StopCoroutine(activeHitStop);
-            Time.timeScale = 1f;
-            activeHitStop = null;
-        }
-    }
-
     void OnTriggerEnter(Collider other)
     {
         if (other.CompareTag("Enemy"))
@@ -91,15 +85,9 @@ public class Hitbox : MonoBehaviour
                 switch (attack.currentAttackType)
                 {
                     case Attack.AttackType.Finisher:
-                        enemy.TakeDamage(weaponData.finisherDamage);
+                        enemy.TakeDamage(weaponData.finisherDamage, weaponData.finisherPayback, true);
                         enemy.Knockback(knockbackDir, attack.defaultForce + playerController.targetVelocity.magnitude * 0.8f, true);
                         
-                        if (!playerController.IsGrounded)
-                        {
-                            playerRB.linearVelocity = new Vector3(playerRB.linearVelocity.x, Mathf.Max(0, playerRB.linearVelocity.y), playerRB.linearVelocity.z);
-                        }
-
-                        enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
                         hitStopDuration = longHitStopDuration; // Longer hitstop for finisher
 
@@ -108,16 +96,19 @@ public class Hitbox : MonoBehaviour
                     case Attack.AttackType.Charged:
                         // Use charge level for damage
                         int damage;
+                        int payback;
                         if (attack.chargeLevel >= 2)
                         {
                             damage = weaponData.chargeDamage;
+                            payback = weaponData.chargePayback;
                         }
                         else
                         {
                             damage = weaponData.finisherDamage;
+                            payback = weaponData.finisherPayback;
                         }
                         
-                        enemy.TakeDamage(damage);
+                        enemy.TakeDamage(damage, payback);
 
                         // Calculate horizontal knockback with slide speed
                         float horizontalForce = attack.defaultForce + playerController.targetVelocity.magnitude * 0.8f;
@@ -132,14 +123,6 @@ public class Hitbox : MonoBehaviour
                         // Pass the direction (normalized) and force (magnitude) separately
                         enemy.Knockback(totalKnockback.normalized, totalKnockback.magnitude, false);
                         
-                        if (!playerController.IsGrounded && !hasBounced)
-                        {
-                            playerRB.linearVelocity = new Vector3(playerRB.linearVelocity.x, 0, playerRB.linearVelocity.z);
-                            playerRB.AddForce(Vector3.up * playerController.doubleJumpForce, ForceMode.Impulse);
-                            hasBounced = true;
-                        }
-
-                        enemy.currentState = EnemyBehaviour.EnemyState.Knockback; // Set state to Knockback to trigger extra damage on wall collision
                         ResetDashes();
                         playerController.pauseFastFall = false;
                         hitStopDuration = longHitStopDuration; // Longer hitstop for charged attack
@@ -151,21 +134,24 @@ public class Hitbox : MonoBehaviour
                         {
                             // Use charge level for damage
                             int varDamage;
+                            int varPayback;
                             if (attack.chargeLevel >= 2)
                             {
                                 varDamage = weaponData.chargeDamage;
+                                varPayback = weaponData.chargePayback;
                             }
                             else
                             {
                                 varDamage = weaponData.finisherDamage;
+                                varPayback = weaponData.finisherPayback;
                             }
                             
-                            enemy.TakeDamage(varDamage);
+                            enemy.TakeDamage(varDamage, varPayback);
                             hitStopDuration = longHitStopDuration; // Longer hitstop for charged launcher
                         }
                         else
                         {
-                            enemy.TakeDamage(weaponData.normalDamage);
+                            enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback);
                         }
                         
                         // Calculate horizontal knockback with slide speed
@@ -184,12 +170,12 @@ public class Hitbox : MonoBehaviour
                         break;
                         
                     case Attack.AttackType.GroundSlam:
-                        enemy.TakeDamage(weaponData.normalDamage);
+                        enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback);
                         enemy.Knockback(Vector3.down, 10f, false);
                         break;
                         
                     case Attack.AttackType.DashSlam:
-                        enemy.TakeDamage(weaponData.normalDamage);
+                        enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback);
                         Vector3 dsHorizontalKnockback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f);
                         Vector3 dsVerticalKnockback = Vector3.down * 10f;
                         Vector3 dsTotalKnockback = dsHorizontalKnockback + dsVerticalKnockback;
@@ -197,7 +183,7 @@ public class Hitbox : MonoBehaviour
                         break;
                     
                     case Attack.AttackType.Spike:
-                        enemy.TakeDamage(weaponData.normalDamage);
+                        enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback);
                         
                         Vector3 spikeHorizontalKnockback = knockbackDir * (1 + playerController.targetVelocity.magnitude * 0.8f);
                         
@@ -225,21 +211,25 @@ public class Hitbox : MonoBehaviour
                         }
                         ResetDashes();
                         ResetJumps();
+                        playerController.StopAttacking();
                         playerController.pauseFastFall = false;
 
                         break;
 
                     case Attack.AttackType.BoundSpike:
                         int BSdamage;
+                        int BSpayback;
                         if (attack.chargeLevel >= 2)
                         {
                             BSdamage = weaponData.chargeDamage;
+                            BSpayback = weaponData.chargePayback;
                         }
                         else
                         {
                             BSdamage = weaponData.finisherDamage;
+                            BSpayback = weaponData.finisherPayback;
                         }
-                        enemy.TakeDamage(BSdamage);
+                        enemy.TakeDamage(BSdamage, BSpayback);
 
                         Vector3 bsHorizontalKnockback = knockbackDir * (1 + playerController.targetVelocity.magnitude * 0.8f);
                         if (enemy.IsGrounded)
@@ -265,13 +255,14 @@ public class Hitbox : MonoBehaviour
 
                         ResetDashes();
                         ResetJumps();
+                        playerController.StopAttacking();
                         playerController.pauseFastFall = false;
                         hitStopDuration = longHitStopDuration; // Longer hitstop for bound spike
 
                         break;
 
                     case Attack.AttackType.AerialPush:
-                        enemy.TakeDamage(weaponData.normalDamage);
+                        enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback);
                         
                         Vector3 apHorizontalPushback = knockbackDir * (attack.bounceForce + Mathf.Max(0, playerController.targetVelocity.magnitude - playerController.moveSpeed) * 0.8f);
                         Vector3 apVerticalPushback = Vector3.up * playerController.shortJumpForce;
@@ -283,7 +274,7 @@ public class Hitbox : MonoBehaviour
                         break;
 
                     case Attack.AttackType.WeakPush:
-                        enemy.TakeDamage(weaponData.normalDamage);
+                        enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback, true);
                         float wpKnockback = Mathf.Max(1f, playerController.targetVelocity.magnitude * 0.8f);
                         enemy.Knockback(knockbackDir, wpKnockback, true);
 
@@ -293,60 +284,18 @@ public class Hitbox : MonoBehaviour
 
                     case Attack.AttackType.Normal:
                     default:
-                        enemy.TakeDamage(weaponData.normalDamage);
+                        enemy.TakeDamage(weaponData.normalDamage, weaponData.normalPayback, true);
                         float knockbackForce = Mathf.Max(1f, playerController.targetVelocity.magnitude * 0.8f);
-
                         enemy.Knockback(knockbackDir, knockbackForce, true);
                         
-                        if (!playerController.IsGrounded)
-                        {
-                            playerRB.linearVelocity = new Vector3(playerRB.linearVelocity.x, Mathf.Max(0, playerRB.linearVelocity.y), playerRB.linearVelocity.z);
-                        }
-
                         ResetDashes();
 
                         break;
                 }
-                // Apply hitstop
-                StopHitStop(); // Stop any existing hitstop before starting a new one
-                activeHitStop = StartCoroutine(HitStop(hitStopDuration));
-            }
-        }
-        else if (other.CompareTag("HazardWall") && !playerController.isGrabbingLedge && !hasBounced) // If player hits a hazard wall, bounce them up and away from it
-        {
-            Rigidbody playerRB = playerController.GetComponent<Rigidbody>();
-            if (!playerController.IsGrounded && 
-                (attack.currentAttackType == Attack.AttackType.Normal ||
-                attack.currentAttackType == Attack.AttackType.Finisher ||
-                attack.currentAttackType == Attack.AttackType.Charged))
-            {
-                playerController.StopAttacking();
+                InterimAudioDirector.TryPlayMove(GetHitCue(), other.transform.position);
 
-                // Store wall normal for input filtering
-                playerController.lastWallNormal = (transform.position - other.ClosestPoint(transform.position)).normalized;
-                playerController.lastWallNormal.y = 0; // Flatten
-                
-                // Set wall jump arc state
-                playerController.IsInWallJumpArc = true;
-                playerController.wallJumpArcTimer = playerController.wallJumpArcDuration;
-                
-                playerController.IsSlideRotationFrozen = true;
-                playerController.slideRotationFreezeTimer = playerController.slideRotationFreezeDuration;
-                
-                // Existing bounce code...
-                Vector3 bounceDir = playerController.lastWallNormal;
-                bounceDir.y = 1;
-                
-                playerRB.linearVelocity = new Vector3(playerRB.linearVelocity.x, 0, playerRB.linearVelocity.z);
-                playerRB.AddForce(bounceDir * playerController.doubleJumpForce, ForceMode.Impulse);
-                
-                // Horizontal momentum to slide
-                Vector3 horizontalDir = new Vector3(bounceDir.x, 0, bounceDir.z).normalized;
-                float bounceSpeed = Mathf.Max(playerController.slideVelocity.magnitude, playerController.doubleJumpForce);
-                playerController.SetSlideVelocity(horizontalDir * bounceSpeed);
-                
-                hasBounced = true;
-                DeactivateHitbox();
+                // Apply hitstop
+                HitStopManager.TriggerHitStop(hitStopDuration);
             }
         }
     }
@@ -354,5 +303,24 @@ public class Hitbox : MonoBehaviour
     void OnTriggerStay(Collider other)
     {
         OnTriggerEnter(other); // For if the attack is triggered before the weapon has fully left the enemy's hitbox, ensuring they still get hit
+    }
+
+    private InterimAudioCue GetHitCue()
+    {
+        switch (attack.currentAttackType)
+        {
+            case Attack.AttackType.Charged:
+            case Attack.AttackType.Finisher:
+            case Attack.AttackType.BoundSpike:
+                return InterimAudioCue.ChargedAttackHit;
+            case Attack.AttackType.Launcher:
+                return InterimAudioCue.LauncherHit;
+            case Attack.AttackType.GroundSlam:
+            case Attack.AttackType.DashSlam:
+            case Attack.AttackType.Spike:
+                return InterimAudioCue.GroundSlamHit;
+            default:
+                return InterimAudioCue.BasicAttackHit;
+        }
     }
 }

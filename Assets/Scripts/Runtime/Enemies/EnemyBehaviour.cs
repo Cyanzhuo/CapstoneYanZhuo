@@ -2,17 +2,28 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.AI;
 
+public interface IEnemyAI
+{
+    void OnPlayerDetected(Transform player);
+    void OnPlayerLost();
+    void OnCounterTriggered();
+    void EnterKnockbackState();
+}
+
 public class EnemyBehaviour : MonoBehaviour
 {
     [Header("Stats")]
     public int health = 100;
-    public int damageAmount = 10;
     int collisionDamage = 5;
     float timeTillDemise = 0.5f;
     float demiseTimer = 0f;
     bool beingPushed;
     Vector3 pushDirection;
     Vector3 softKnockback;
+
+    [Header("Payback Gauge")]
+    [SerializeField] private float maxPayback = 50f;
+    [SerializeField] private float currentPayback = 0f;
     
     [Header("Gravity")]
     float gravityMultiplier = 2f;
@@ -31,7 +42,7 @@ public class EnemyBehaviour : MonoBehaviour
     // Components cached for performance
     private Rigidbody rb;
     NavMeshAgent myAgent;
-    Chaser chaser;
+    IEnemyAI enemyAI;
     [SerializeField] private Attack attack;
 
     public enum EnemyState
@@ -39,6 +50,9 @@ public class EnemyBehaviour : MonoBehaviour
         Normal, Hitstun, Knockback, Spiked, Rebound
     }
     [HideInInspector] public EnemyState currentState = EnemyState.Normal;
+    [SerializeField] private float counterChance = 0.5f;
+    private bool counterTriggered = false;
+    private bool enraged = false;
 
     /// <summary>
     /// Checks if the enemy is currently touching the floor.
@@ -57,7 +71,7 @@ public class EnemyBehaviour : MonoBehaviour
         // Cache references once at the very start
         rb = GetComponent<Rigidbody>();
         myAgent = GetComponent<NavMeshAgent>();
-        chaser = GetComponent<Chaser>();
+        enemyAI = GetComponent<IEnemyAI>();
         if (attack == null)
         {
             attack = FindFirstObjectByType<Attack>();
@@ -139,9 +153,21 @@ public class EnemyBehaviour : MonoBehaviour
     }
 
     #region Combat Logic
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, int payback = 0, bool shouldTriggerCounter = false)
     {
+        if (enraged)
+        {
+            amount /= 2;
+            float randomValue = Random.value; // 0 to 1
+            if (randomValue < counterChance && shouldTriggerCounter)
+            {
+                TriggerCounter();
+                return;
+            }
+        }
         health -= amount;
+        currentPayback = Mathf.Clamp(currentPayback + payback, 0, maxPayback);
+        enraged = currentPayback == maxPayback;
 
         if (health <= 0)
         {
@@ -151,9 +177,24 @@ public class EnemyBehaviour : MonoBehaviour
 
         UpdateHealthText();
     }
+    
+    void TriggerCounter()
+    {
+        counterTriggered = true;
+        if (enemyAI != null)
+        {
+            enemyAI.OnCounterTriggered();
+        }
+    }
 
     public void Knockback(Vector3 direction, float force, bool shouldJuggle)
     {
+        if (counterTriggered)
+        {
+            counterTriggered = false;
+            return;
+        }
+        
         if (myAgent != null && myAgent.enabled)
         {
             myAgent.enabled = false; // Disable NavMeshAgent to allow for physics-based knockback
@@ -175,9 +216,9 @@ public class EnemyBehaviour : MonoBehaviour
             rb.AddForce(knockback, ForceMode.VelocityChange);
         }
         
-        if (chaser != null)
+        if (enemyAI != null)
         {
-            StartCoroutine(chaser.SwitchState(Chaser.State.Knockback));
+            enemyAI.EnterKnockbackState();
         }
     }
 
@@ -197,9 +238,9 @@ public class EnemyBehaviour : MonoBehaviour
             rb.linearVelocity = new Vector3(direction.x, verticalMotion.y, direction.z);
         }
 
-        if (chaser != null)
+        if (enemyAI != null)
         {
-            StartCoroutine(chaser.SwitchState(Chaser.State.Knockback));
+            enemyAI.EnterKnockbackState();
         }
     }
 
@@ -214,12 +255,7 @@ public class EnemyBehaviour : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        if (currentState == EnemyState.Knockback && collision.gameObject.CompareTag("Wall"))
-        {
-            TakeDamage(collisionDamage);
-            currentState = EnemyState.Normal;
-        }
-        else if (collision.gameObject.CompareTag("HazardWall"))
+        if (collision.gameObject.CompareTag("Hazard"))
         {
             Die();
         }

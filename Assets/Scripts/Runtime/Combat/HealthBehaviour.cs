@@ -4,6 +4,7 @@
 * Description:
 */
 
+using Game.Audio;
 using UnityEngine;
 
 public class HealthBehaviour : MonoBehaviour
@@ -11,8 +12,6 @@ public class HealthBehaviour : MonoBehaviour
     // Amount of health to recover
     [SerializeField]
     int healAmount = 1;
-    [SerializeField]
-    int DamageAmount = 1;
     [SerializeField]
     float damageInterval = 1f;
     private float lastDamageTime;
@@ -41,14 +40,14 @@ public class HealthBehaviour : MonoBehaviour
         player.ModifyHealth(healAmount);
     }
     // Method to apply damage
-    public void ApplyDamage(PlayerBehaviour player)
+    public void ApplyDamage(PlayerBehaviour player, int DamageAmount)
     {
         // Only damage if enough time has passed
         if (Time.time - lastDamageTime >= damageInterval)
         {
             player.ModifyHealth(-DamageAmount);
             lastDamageTime = Time.time; // Update the last damage time
-            if (audioSource != null)
+            if (!InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttackHit, transform.position) && audioSource != null)
             {
                 audioSource.Play(); // Play the lava damage sound
             }
