@@ -2725,7 +2725,7 @@ MonoBehaviour:
   patrolRange: 5
   patrolSampleRadius: 2
   maxPatrolAttempts: 20
-  projectilePrefab: {fileID: 8232412741338911169, guid: 7c855ce955f993b4a8b056fec1c945a6, type: 3}
+  projectilePrefab: {fileID: 5160748712532436376, guid: cad424b0be262054895250062b5d1623, type: 3}
   firePoint: {fileID: 0}
   firePointOffset: {x: 0, y: 1.2, z: 1}
   projectileSpeed: 15
