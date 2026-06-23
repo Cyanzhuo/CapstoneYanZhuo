@@ -53,6 +53,7 @@ public class EnemyBehaviour : MonoBehaviour
     [SerializeField] private float counterChance = 0.5f;
     private bool counterTriggered = false;
     private bool enraged = false;
+    private bool wasEnragedB4Hit = false;
 
     /// <summary>
     /// Checks if the enemy is currently touching the floor.
@@ -155,6 +156,7 @@ public class EnemyBehaviour : MonoBehaviour
     #region Combat Logic
     public void TakeDamage(int amount, int payback = 0, bool shouldTriggerCounter = false)
     {
+        wasEnragedB4Hit = enraged; // Store the enraged state before taking damage
         if (enraged)
         {
             amount /= 2;
@@ -204,6 +206,7 @@ public class EnemyBehaviour : MonoBehaviour
             rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
             
+            if (enraged && wasEnragedB4Hit) force *= 0.5f; // Reduce knockback force if the enemy is enraged and was enraged before the hit
             Vector3 knockback = direction.normalized * force;
             
             if (shouldJuggle && !IsGrounded)
@@ -230,6 +233,12 @@ public class EnemyBehaviour : MonoBehaviour
         }
         if (rb != null)
         {
+            if (enraged && wasEnragedB4Hit)
+            {
+                direction *= 0.5f; // Reduce push force if the enemy is enraged and was enraged before the hit
+                verticalMotion *= 0.5f;
+                knockback *= 0.5f;
+            }
             rb.isKinematic = false;
             beingPushed = true;
             pauseFastFall = true;
