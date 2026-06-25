@@ -169,7 +169,7 @@ public class EnemyBehaviour : MonoBehaviour
         }
         health -= amount;
         currentPayback = Mathf.Clamp(currentPayback + payback, 0, maxPayback);
-        enraged = currentPayback == maxPayback;
+        enraged = currentPayback == maxPayback && health > 0;
 
         if (health <= 0)
         {

@@ -199,7 +199,8 @@ public class Attack : MonoBehaviour
             }
         }
 
-        if (currentAttackType != AttackType.None &&
+        if (playerController.isAttacking &&
+            currentAttackType != AttackType.None &&
             currentAttackType != AttackType.GroundSlam &&
             currentAttackType != AttackType.DashSlam &&
             currentAttackType != AttackType.AerialPush) // Unless it's a continuous attack
