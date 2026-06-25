@@ -101,6 +101,8 @@ GameObject:
   - component: {fileID: 4209752399424763113}
   - component: {fileID: 5528840149857628684}
   - component: {fileID: 1928756162159249103}
+  - component: {fileID: 401118104683594539}
+  - component: {fileID: -2246937035793700966}
   m_Layer: 0
   m_Name: potion
   m_TagString: Untagged
@@ -181,3 +183,45 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!135 &401118104683594539
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4235598908464709960}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-2246937035793700966
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4235598908464709960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ec875107eeb0864c81de9a595575bd8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DroppedPickup
+  pickupType: 2
+  coinAmount: 1
+  playerTag: Player
+  rotate: 1
+  rotationSpeed: 120
+  bob: 1
+  bobSpeed: 2
+  bobHeight: 0.15
+  lifeTime: 30
