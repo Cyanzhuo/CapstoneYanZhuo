@@ -2922,6 +2922,77 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!1 &913436951
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 913436952}
+  - component: {fileID: 913436954}
+  - component: {fileID: 913436953}
+  m_Layer: 0
+  m_Name: LungeTrigger
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &913436952
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 913436951}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7887718477604396665}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &913436953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 913436951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9268a6869b59250428950bbccafa4035, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  currentAttackTarget: {fileID: 0}
+  hasAppliedAirBoost: 0
+  timer: 0
+  duration: 0.5
+  sphere: {fileID: 0}
+--- !u!135 &913436954
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 913436951}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.7
+  m_Center: {x: 0, y: 0.6, z: 0}
 --- !u!1 &937957716
 GameObject:
   m_ObjectHideFlags: 0
@@ -29046,7 +29117,6 @@ MonoBehaviour:
   defaultRange: 1.5
   dashRange: 4
   enemyProximityThreshold: 0.3
-  attackBoxSize: {x: 0.4, y: 1, z: 0.6}
   verticalExclusionAngle: 30
   horizontalExclusionAngle: 45
   defaultForce: 6
@@ -29071,11 +29141,13 @@ MonoBehaviour:
   attackEffect: {fileID: 1172844540224751536}
   finisherEffect: {fileID: 2062004454987642786}
   chargeEffect: {fileID: 8585039566571784345}
+  lungeTrigger: {fileID: 0}
   cooldownTimer: 0
   isInCooldown: 0
   countsAsDashSlam: 0
   appliedJuggleForce: 0
   windingUpSlam: 0
+  directionToEnemy: {x: 0, y: 0, z: 0}
 --- !u!137 &6774042060524929103
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 0
@@ -31574,6 +31646,7 @@ Transform:
   - {fileID: 6342960714232647420}
   - {fileID: 8416390842011709389}
   - {fileID: 5196331956321044534}
+  - {fileID: 913436952}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7897509200109179329
