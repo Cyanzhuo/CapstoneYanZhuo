@@ -1711,7 +1711,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1207251033}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Menu, Game.UI
         m_MethodName: ResumeGame
         m_Mode: 1
@@ -3754,7 +3754,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1207251032
 Transform:
   m_ObjectHideFlags: 0
@@ -8827,6 +8827,7 @@ GameObject:
   - component: {fileID: 885644783560992633}
   - component: {fileID: 2287232188803406471}
   - component: {fileID: 2757974136840946686}
+  - component: {fileID: 7887718477604396666}
   m_Layer: 6
   m_Name: ito_rigged
   m_TagString: Player
@@ -31649,6 +31650,19 @@ Transform:
   - {fileID: 913436952}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7887718477604396666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140051627065710145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcd4852cb42cda5499afcacfde100ea7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Game.Runtime::MyMenu
+  menuPanel: {fileID: 937957716}
 --- !u!1 &7897509200109179329
 GameObject:
   m_ObjectHideFlags: 0
