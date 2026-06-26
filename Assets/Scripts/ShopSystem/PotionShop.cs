@@ -4,13 +4,13 @@ using UnityEngine;
 public class PotionShop : MonoBehaviour
 {
     [Header("Prices")]
-    [SerializeField] private int healthPotionCost = 10;
+    [SerializeField] private int healthPotionCost = 15;
     [SerializeField] private int damagePotionCost = 15;
 
-    [Header("Shop Text")]
+    [Header("Shop Counter Text")]
     [SerializeField] private TextMeshProUGUI coinText;
-    [SerializeField] private TextMeshProUGUI healthPotionText;
-    [SerializeField] private TextMeshProUGUI damagePotionText;
+    [SerializeField] private TextMeshProUGUI healthPotionOwnedText;
+    [SerializeField] private TextMeshProUGUI damagePotionOwnedText;
     [SerializeField] private TextMeshProUGUI messageText;
 
     private void OnEnable()
@@ -77,22 +77,37 @@ public class PotionShop : MonoBehaviour
     {
         if (PlayerInventory.Instance == null)
         {
+            if (coinText != null)
+            {
+                coinText.text = "0";
+            }
+
+            if (healthPotionOwnedText != null)
+            {
+                healthPotionOwnedText.text = "0";
+            }
+
+            if (damagePotionOwnedText != null)
+            {
+                damagePotionOwnedText.text = "0";
+            }
+
             return;
         }
 
         if (coinText != null)
         {
-            coinText.text = "Coins: " + PlayerInventory.Instance.Coins;
+            coinText.text = PlayerInventory.Instance.Coins.ToString();
         }
 
-        if (healthPotionText != null)
+        if (healthPotionOwnedText != null)
         {
-            healthPotionText.text = "Health Potion: " + PlayerInventory.Instance.HealthPotions + " | Cost: " + healthPotionCost;
+            healthPotionOwnedText.text = PlayerInventory.Instance.HealthPotions.ToString();
         }
 
-        if (damagePotionText != null)
+        if (damagePotionOwnedText != null)
         {
-            damagePotionText.text = "Damage Potion: " + PlayerInventory.Instance.DamagePotions + " | Cost: " + damagePotionCost;
+            damagePotionOwnedText.text = PlayerInventory.Instance.DamagePotions.ToString();
         }
     }
 
