@@ -9,6 +9,7 @@ public class Potions : MonoBehaviour
     HealthBehaviour playerHealth;
     PlayerBehaviour playerBehaviour;
     [SerializeField] InventoryMenuController playerInventory;
+    [SerializeField] GameObject projectilePrefab;
     
     void Start()
     {
@@ -25,5 +26,11 @@ public class Potions : MonoBehaviour
     {
         playerInventory.UseHealthPotion();
         playerHealth.RecoverHealth(playerBehaviour, healAmount);
+    }
+
+    public void OnShoot(InputValue value)
+    {
+        playerInventory.UseDamagePotion();
+        Instantiate(projectilePrefab, transform.position, transform.rotation);
     }
 }

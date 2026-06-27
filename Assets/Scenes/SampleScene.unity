@@ -32355,6 +32355,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   healAmount: 25
   playerInventory: {fileID: 1866731761}
+  projectilePrefab: {fileID: 2189339154847340957, guid: 6da08c2d19f253b45bfc8e26721ad6b8, type: 3}
 --- !u!1 &7897509200109179329
 GameObject:
   m_ObjectHideFlags: 0
