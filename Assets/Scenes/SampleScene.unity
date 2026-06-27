@@ -2231,7 +2231,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 564375582}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: d7c8c1fc3ad6bde4d802480cccf1f07b, type: 3}
   m_Name: 
@@ -8972,7 +8972,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dbfb322289adf7b4db445c95125410ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::HealthBehaviour
-  healAmount: 1
   damageInterval: 0.5
 --- !u!4 &915899227840123489
 Transform:
@@ -9506,6 +9505,7 @@ GameObject:
   - component: {fileID: 2287232188803406471}
   - component: {fileID: 2757974136840946686}
   - component: {fileID: 7887718477604396666}
+  - component: {fileID: 7887718477604396667}
   m_Layer: 6
   m_Name: ito_rigged
   m_TagString: Player
@@ -32341,6 +32341,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::MyMenu
   menuPanel: {fileID: 937957716}
+--- !u!114 &7887718477604396667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1140051627065710145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9609c1c1edacc054c89071ac8c7b5ec2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  healAmount: 25
+  playerInventory: {fileID: 1866731761}
 --- !u!1 &7897509200109179329
 GameObject:
   m_ObjectHideFlags: 0
