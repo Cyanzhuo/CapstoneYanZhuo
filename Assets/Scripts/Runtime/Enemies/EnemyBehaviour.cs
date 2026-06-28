@@ -13,8 +13,8 @@ public interface IEnemyAI
 public class EnemyBehaviour : MonoBehaviour
 {
     [Header("Stats")]
-    public int health = 100;
-    int collisionDamage = 5;
+    public float health = 100;
+    float collisionDamage = 5;
     float timeTillDemise = 0.5f;
     float demiseTimer = 0f;
     bool beingPushed;
@@ -155,7 +155,7 @@ public class EnemyBehaviour : MonoBehaviour
     }
 
     #region Combat Logic
-    public void TakeDamage(int amount, int payback = 0, bool shouldTriggerCounter = false)
+    public void TakeDamage(float amount, int payback = 0, bool shouldTriggerCounter = false)
     {
         wasEnragedB4Hit = enraged; // Store the enraged state before taking damage
         if (enraged)
