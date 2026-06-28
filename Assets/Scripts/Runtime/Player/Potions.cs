@@ -8,13 +8,15 @@ public class Potions : MonoBehaviour
     private PlayerInputActions controls;
     HealthBehaviour playerHealth;
     PlayerBehaviour playerBehaviour;
-    [SerializeField] InventoryMenuController playerInventory;
+    PlayerInventory playerInventory;
+    [SerializeField] InventoryMenuController inventoryMenuController;
     [SerializeField] GameObject projectilePrefab;
     
     void Start()
     {
         playerHealth = GetComponent<HealthBehaviour>();
         playerBehaviour = GetComponent<PlayerBehaviour>();
+        playerInventory = GetComponent<PlayerInventory>();
     }
 
     void Awake()
@@ -24,13 +26,29 @@ public class Potions : MonoBehaviour
 
     public void OnSpecial(InputValue value)
     {
-        playerInventory.UseHealthPotion();
-        playerHealth.RecoverHealth(playerBehaviour, healAmount);
+        if (playerInventory.UseHealthPotion())
+        {
+            playerHealth.RecoverHealth(playerBehaviour, healAmount);
+
+            inventoryMenuController.RefreshInventory();
+        }
+        else
+        {
+            Debug.Log("No Health Potion.");
+        }
     }
 
     public void OnShoot(InputValue value)
     {
-        playerInventory.UseDamagePotion();
-        Instantiate(projectilePrefab, transform.position, transform.rotation);
+        if (playerInventory.UseDamagePotion())
+        {
+            Instantiate(projectilePrefab, transform.position, transform.rotation);
+
+            inventoryMenuController.RefreshInventory();
+        }
+        else
+        {
+            Debug.Log("No Damage Potion.");
+        }
     }
 }
