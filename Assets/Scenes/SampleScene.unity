@@ -594,6 +594,7 @@ MonoBehaviour:
   health: 100
   maxPayback: 50
   currentPayback: 0
+  enragedAura: {fileID: 0}
   groundCheckDistance: 0.5
   groundSphereRadius: 0.2
   healthText: {fileID: 64485221}
@@ -24881,6 +24882,7 @@ MonoBehaviour:
   health: 100
   maxPayback: 50
   currentPayback: 0
+  enragedAura: {fileID: 0}
   groundCheckDistance: 0.5
   groundSphereRadius: 0.2
   healthText: {fileID: 1687360750}

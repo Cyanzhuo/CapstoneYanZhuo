@@ -24,6 +24,7 @@ public class EnemyBehaviour : MonoBehaviour
     [Header("Payback Gauge")]
     [SerializeField] private float maxPayback = 50f;
     [SerializeField] private float currentPayback = 0f;
+    [SerializeField] private ParticleSystem enragedAura;
     
     [Header("Gravity")]
     float gravityMultiplier = 2f;
@@ -170,6 +171,17 @@ public class EnemyBehaviour : MonoBehaviour
         health -= amount;
         currentPayback = Mathf.Clamp(currentPayback + payback, 0, maxPayback);
         enraged = currentPayback == maxPayback && health > 0;
+        if (enragedAura != null)
+        {
+            if (enraged)
+            {
+                enragedAura.Play();
+            }
+            else
+            {
+                enragedAura.Stop();
+            }
+        }
 
         if (health <= 0)
         {
