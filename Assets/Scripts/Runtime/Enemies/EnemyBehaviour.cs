@@ -52,6 +52,7 @@ public class EnemyBehaviour : MonoBehaviour
     }
     [HideInInspector] public EnemyState currentState = EnemyState.Normal;
     [SerializeField] private float counterChance = 0.5f;
+    [SerializeField] private ParticleSystem counterEffect;
     private bool counterTriggered = false;
     private bool enraged = false;
     private bool wasEnragedB4Hit = false;
@@ -194,6 +195,11 @@ public class EnemyBehaviour : MonoBehaviour
     
     void TriggerCounter()
     {
+        if (counterEffect != null)
+        {
+            counterEffect.Stop();
+            counterEffect.Play();
+        }
         counterTriggered = true;
         if (enemyAI != null)
         {
