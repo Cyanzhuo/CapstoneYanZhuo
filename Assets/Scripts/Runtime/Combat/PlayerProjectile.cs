@@ -6,6 +6,7 @@ public class PlayerProjectile : MonoBehaviour
 {
     [SerializeField] public float lifetime = 1f;
     [SerializeField] private int damage = 15;
+    [SerializeField] private int payback = -10;
     [SerializeField] private float hitStopDuration = 0.1f;
     
     // Track enemies hit during this attack
@@ -33,7 +34,7 @@ public class PlayerProjectile : MonoBehaviour
                 Vector3 knockbackDir = (other.transform.position - transform.position).normalized;
                 knockbackDir.y = 0; // Keep it on a flat plane
 
-                enemy.TakeDamage(damage, 0, true);
+                enemy.TakeDamage(damage, payback);
                 enemy.Knockback(knockbackDir, 5f, true);
                 
                 InterimAudioDirector.TryPlayMove(InterimAudioCue.ChargedAttackHit, other.transform.position);
