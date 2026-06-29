@@ -323,7 +323,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 5
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &6165099782305339318
 MonoBehaviour:
@@ -12348,6 +12348,7 @@ GameObject:
   - component: {fileID: 7000651456854699257}
   - component: {fileID: 847210794721260917}
   - component: {fileID: 9132159532475243391}
+  - component: {fileID: 2276404183799265738}
   m_Layer: 3
   m_Name: felino_archer
   m_TagString: Enemy
@@ -12524,6 +12525,30 @@ MonoBehaviour:
   currentState: 0
   counterChance: 0.5
   counterEffect: {fileID: 597350386295234619}
+--- !u!114 &2276404183799265738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6722261008691078444}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5afd741eb8beeaf46bd20bc1a88b5782, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDropper
+  coinPickupPrefab: {fileID: 6612513625776112052, guid: c30ff2b17f7a1674e91ccb0bee8be2a2, type: 3}
+  healthPotionPickupPrefab: {fileID: 4548051944110216264, guid: 5355732ed15f28c43ab09362a5467161, type: 3}
+  damagePotionPickupPrefab: {fileID: 4235598908464709960, guid: bad479d40efecbf44978b887b7414342, type: 3}
+  coinDropChance: 1
+  minCoins: 1
+  maxCoins: 2
+  healthPotionDropChance: 0.08
+  damagePotionDropChance: 0.03
+  dropOffset: {x: 0, y: 0.5, z: 0}
+  scatterRadius: 0.6
+  dropOnDestroy: 1
+  dropOnDisable: 1
 --- !u!1 &7028604289146488837
 GameObject:
   m_ObjectHideFlags: 0

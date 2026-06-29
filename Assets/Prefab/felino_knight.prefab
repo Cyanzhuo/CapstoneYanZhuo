@@ -1527,7 +1527,7 @@ SphereCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 5
+  m_Radius: 8
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &3228969505408968434
 MonoBehaviour:
@@ -1737,6 +1737,7 @@ GameObject:
   - component: {fileID: 6312008096043183494}
   - component: {fileID: 202752764523473548}
   - component: {fileID: 4296559022193904709}
+  - component: {fileID: 4329981487152351871}
   m_Layer: 3
   m_Name: felino_knight
   m_TagString: Enemy
@@ -1906,14 +1907,38 @@ MonoBehaviour:
   centerPoint: {fileID: 1750729846396278376}
   attackBoxSize: {x: 0.6, y: 1.4, z: 0.6}
   idleDuration: 2
-  focusDuration: 6
+  focusDuration: 4
   retreatDuration: 1
-  directionChangeInterval: 3
+  directionChangeInterval: 2
   rotationSpeed: 60
   minRadius: 1
   patrolRange: 5
   patrolRadius: 5
   currentState: 0
+--- !u!114 &4329981487152351871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3221714927541643151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5afd741eb8beeaf46bd20bc1a88b5782, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyDropper
+  coinPickupPrefab: {fileID: 6612513625776112052, guid: c30ff2b17f7a1674e91ccb0bee8be2a2, type: 3}
+  healthPotionPickupPrefab: {fileID: 4548051944110216264, guid: 5355732ed15f28c43ab09362a5467161, type: 3}
+  damagePotionPickupPrefab: {fileID: 4235598908464709960, guid: bad479d40efecbf44978b887b7414342, type: 3}
+  coinDropChance: 1
+  minCoins: 1
+  maxCoins: 2
+  healthPotionDropChance: 0.08
+  damagePotionDropChance: 0.03
+  dropOffset: {x: 0, y: 0.5, z: 0}
+  scatterRadius: 0.6
+  dropOnDestroy: 1
+  dropOnDisable: 1
 --- !u!1 &3344586466147359852
 GameObject:
   m_ObjectHideFlags: 0

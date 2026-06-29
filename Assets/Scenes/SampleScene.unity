@@ -601,6 +601,7 @@ MonoBehaviour:
   attack: {fileID: 6769345499666751070}
   currentState: 0
   counterChance: 0.5
+  counterEffect: {fileID: 0}
 --- !u!65 &112572288
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4376,35 +4377,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1423336542 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3221714927541643151, guid: 5152741d840bc0d4aab3e9a7d5fb848c, type: 3}
-  m_PrefabInstance: {fileID: 6089828332369616961}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1423336550
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1423336542}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5afd741eb8beeaf46bd20bc1a88b5782, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EnemyDropper
-  coinPickupPrefab: {fileID: 6612513625776112052, guid: c30ff2b17f7a1674e91ccb0bee8be2a2, type: 3}
-  healthPotionPickupPrefab: {fileID: 4548051944110216264, guid: 5355732ed15f28c43ab09362a5467161, type: 3}
-  damagePotionPickupPrefab: {fileID: 4235598908464709960, guid: bad479d40efecbf44978b887b7414342, type: 3}
-  coinDropChance: 1
-  minCoins: 1
-  maxCoins: 2
-  healthPotionDropChance: 0.08
-  damagePotionDropChance: 0.03
-  dropOffset: {x: 0, y: 0.5, z: 0}
-  scatterRadius: 0.6
-  dropOnDestroy: 1
-  dropOnDisable: 1
 --- !u!1 &1443592622
 GameObject:
   m_ObjectHideFlags: 0
@@ -24889,6 +24861,7 @@ MonoBehaviour:
   attack: {fileID: 6769345499666751070}
   currentState: 0
   counterChance: 0.5
+  counterEffect: {fileID: 0}
 --- !u!54 &4319943191827880018
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -28447,10 +28420,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 3221714927541643151, guid: 5152741d840bc0d4aab3e9a7d5fb848c, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1423336550}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5152741d840bc0d4aab3e9a7d5fb848c, type: 3}
 --- !u!137 &6098633471397239072
 SkinnedMeshRenderer:
