@@ -192,9 +192,10 @@ public class Chaser : MonoBehaviour, IEnemyAI
     IEnumerator Attack()
     {
         InterimAudioDirector.TryPlayMove(attackStartCue, transform.position);
+        yield return new WaitForSeconds(0.5f); // Placeholder for wind-up duration
         hitbox.ActivateHitbox();
         // Wait for attack animation to finish before switching to retreat
-        yield return new WaitForSeconds(1f); // Placeholder for attack duration
+        yield return new WaitForSeconds(0.5f); // Placeholder for attack duration
         hitbox.DeactivateHitbox();
         SwitchState(State.Retreat);
         yield break;

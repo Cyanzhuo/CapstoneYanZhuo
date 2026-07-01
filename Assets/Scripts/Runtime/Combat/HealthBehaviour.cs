@@ -9,9 +9,6 @@ using UnityEngine;
 
 public class HealthBehaviour : MonoBehaviour
 {
-    // Amount of health to recover
-    [SerializeField]
-    int healAmount = 1;
     [SerializeField]
     float damageInterval = 1f;
     private float lastDamageTime;
@@ -30,7 +27,7 @@ public class HealthBehaviour : MonoBehaviour
     /// This allows the recovery object to modify the player's health
     /// The method is public so it can be accessed from other scripts
     /// </summary>
-    public void RecoverHealth(PlayerBehaviour player)
+    public void RecoverHealth(PlayerBehaviour player, int healAmount)
     {
         /// <summary>
         /// Calls the ModifyHealth method on the player object

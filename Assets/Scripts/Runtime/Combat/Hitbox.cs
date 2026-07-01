@@ -13,7 +13,6 @@ public class Hitbox : MonoBehaviour
     // Track enemies hit during this attack
     private HashSet<EnemyBehaviour> hitEnemies = new HashSet<EnemyBehaviour>();
     private bool hasBounced; // To prevent multiple bounces on spike attack
-    private Coroutine activeHitStop = null;
 
     void Start()
     {
