@@ -26,6 +26,7 @@ public class Attack : MonoBehaviour
     [SerializeField] private float defaultRange = 1f;
     [SerializeField] private float dashRange = 2f;
     [SerializeField] private float enemyProximityThreshold = 0.3f; // How close the enemy needs to be to trigger StopAttacking()
+    [SerializeField] private Vector3 attackBoxSize = new Vector3(0.6f, 1.2f, 0.6f); // Size of the box for enemy detection during attacks
     [SerializeField] private float verticalExclusionAngle = 30f;
     [SerializeField] private float horizontalExclusionAngle = 45f;
     public float defaultForce = 5f;
@@ -72,7 +73,6 @@ public class Attack : MonoBehaviour
     private Animator animator;
     private Rigidbody rb;
     private ThirdPersonController playerController;
-    [SerializeField] LungeDetection lungeTrigger;
 
     // Internal State
     private int attackStage = 0;
@@ -85,7 +85,8 @@ public class Attack : MonoBehaviour
     [HideInInspector] public bool windingUpSlam;
     private float windUpTimer;
     public Coroutine groundSlamLandingCoroutine;
-    [HideInInspector] public Vector3 directionToEnemy;
+    private Vector3 directionToEnemy;
+    private bool hasAppliedAirBoost = false;
 
     // Helper property for chest-level origin
     private Vector3 AttackOrigin => transform.position + Vector3.up * 0.6f;
@@ -95,8 +96,6 @@ public class Attack : MonoBehaviour
         animator = GetComponent<Animator>();
         rb = GetComponent<Rigidbody>();
         playerController = GetComponent<ThirdPersonController>();
-        lungeTrigger = GetComponentInChildren<LungeDetection>();
-        lungeTrigger.sphere.enabled = false;
     }
     void Awake()
     {
@@ -198,6 +197,14 @@ public class Attack : MonoBehaviour
             {
                 GroundSlam();
             }
+        }
+
+        if (currentAttackType != AttackType.None &&
+            currentAttackType != AttackType.GroundSlam &&
+            currentAttackType != AttackType.DashSlam &&
+            currentAttackType != AttackType.AerialPush) // Unless it's a continuous attack
+        {
+            ManageEnemyDetection();
         }
     }
 
@@ -397,9 +404,6 @@ public class Attack : MonoBehaviour
                 LungeAtTarget(target, force);
                 playerController.LockOnTarget(target);
                 hasValidTarget = true;
-                lungeTrigger.sphere.enabled = true;
-                lungeTrigger.currentAttackTarget = target;
-                lungeTrigger.timer = lungeTrigger.duration;
             }
         }
         if (!hasValidTarget)
@@ -516,9 +520,6 @@ public class Attack : MonoBehaviour
                 if (countsAsDashAttack)
                 {
                     LungeAtTarget(target, dashForce);
-                    lungeTrigger.sphere.enabled = true;
-                    lungeTrigger.currentAttackTarget = target;
-                    lungeTrigger.timer = lungeTrigger.duration;
                 }
                 hasValidTarget = true;
             }
@@ -648,9 +649,6 @@ public class Attack : MonoBehaviour
                 if (countsAsDashSlam)
                 {
                     LungeAtTarget(target, dashForce);
-                    lungeTrigger.sphere.enabled = true;
-                    lungeTrigger.currentAttackTarget = target;
-                    lungeTrigger.timer = lungeTrigger.duration;
                 }
                 hasValidTarget = true;
             }
@@ -686,9 +684,6 @@ public class Attack : MonoBehaviour
                 if (countsAsDashSlam)
                 {
                     LungeAtTarget(target, dashForce);
-                    lungeTrigger.sphere.enabled = true;
-                    lungeTrigger.currentAttackTarget = target;
-                    lungeTrigger.timer = lungeTrigger.duration;
                 }
                 hasValidTarget = true;
             }
@@ -763,7 +758,7 @@ public class Attack : MonoBehaviour
     {
         currentAttackType = AttackType.None;
         isFinisher = false;
-        lungeTrigger.hasAppliedAirBoost = false;
+        hasAppliedAirBoost = false;
         weaponHitbox.DeactivateHitbox();
         playerController.StopAttacking();
         playerController.UnlockTarget();
@@ -789,12 +784,53 @@ public class Attack : MonoBehaviour
         }
     }
 
+    // Used to stop attack lunge
+    private void ManageEnemyDetection()
+    {
+        Vector3 boxCenter = AttackOrigin + transform.forward * enemyProximityThreshold;
+        // Make the box face the enemy
+        Vector3 direction = directionToEnemy != Vector3.zero ? directionToEnemy : transform.forward; // Fallback to forward if directionToEnemy is zero
+        direction.y = 0; // Ignore vertical direction for box rotation
+        Quaternion boxRotation = Quaternion.LookRotation(direction, Vector3.up);
+        Collider[] hits = Physics.OverlapBox(boxCenter, attackBoxSize * 0.5f, boxRotation, enemyLayer);
+        if (hits.Length > 0 && playerController.isAttacking)
+        {
+            playerController.StopAttacking();
+            directionToEnemy = Vector3.zero; // Reset direction after successfully hitting an enemy
+            if (!playerController.IsGrounded && !hasAppliedAirBoost)
+            {
+                if (currentAttackType == AttackType.Charged)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
+                    rb.AddForce(Vector3.up * playerController.doubleJumpForce, ForceMode.Impulse);
+                    hasAppliedAirBoost = true;
+                }
+                else if (currentAttackType == AttackType.Normal ||
+                        currentAttackType == AttackType.Finisher)
+                {
+                    rb.linearVelocity = new Vector3(rb.linearVelocity.x, Mathf.Max(playerController.slowFallSpeed, rb.linearVelocity.y), rb.linearVelocity.z);
+                    hasAppliedAirBoost = true;
+                }
+            }
+        }
+
+        // If you miss, wait for there to be no enemies in attack range before stopping the lunge
+        Collider[] enemiesInRange = Physics.OverlapSphere(AttackOrigin, dashRange, enemyLayer);
+        if (enemiesInRange.Length == 0 && playerController.isAttacking)
+        {
+            playerController.StopAttacking();
+            directionToEnemy = Vector3.zero;
+        }
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(AttackOrigin, defaultRange);
         Gizmos.color = Color.green;
         Gizmos.DrawWireSphere(AttackOrigin, dashRange);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireCube(AttackOrigin + transform.forward * enemyProximityThreshold, attackBoxSize);
     }
     #endregion
 }
