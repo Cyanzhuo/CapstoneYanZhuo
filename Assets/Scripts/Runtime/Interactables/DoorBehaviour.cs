@@ -56,6 +56,7 @@ public class DoorBehaviour : MonoBehaviour
 
                 Debug.Log("Door unlocked!");
                 ToggleDoor(); // Call the Interact method to open the door
+                player.keycardsCollected--; // Decrease the player's keycard count
             }
             else
             {
@@ -102,5 +103,15 @@ public class DoorBehaviour : MonoBehaviour
             isOpen = true;
         }
         transform.eulerAngles = doorRotation;
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player") && !isOpen)
+        {
+            PlayerBehaviour player = other.GetComponent<PlayerBehaviour>();
+            if (player) Interact(player);
+            isOpen = true;
+        }
     }
 }

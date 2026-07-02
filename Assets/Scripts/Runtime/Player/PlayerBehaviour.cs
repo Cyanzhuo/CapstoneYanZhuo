@@ -37,15 +37,15 @@ public class PlayerBehaviour : MonoBehaviour
     // [SerializeField] Image keycardUI;
     int currentScore = 0;
     // bool canInteract = false;
-    private bool hasKeycard = false;
+    public int keycardsCollected = 0;
     // private bool hasCrystal = false;
     // CoinBehaviour currentCoin = null;
     // DoorBehaviour currentDoor = null;
-    // KeycardBehaviour currentKeycard = null;
+    KeycardBehaviour currentKeycard = null;
 
     // [SerializeField] float interactionDistance = 2f;
 
-    // [SerializeField] TMP_Text congratulatoryText;
+    [SerializeField] TMP_Text congratulatoryText;
 
     private Vector3 spawnPoint;
 
@@ -117,7 +117,7 @@ public class PlayerBehaviour : MonoBehaviour
 
     public bool HasKeycard()
     {
-        return hasKeycard;
+        return keycardsCollected > 0;
     }
 
     /// <summary>
@@ -158,13 +158,20 @@ public class PlayerBehaviour : MonoBehaviour
         }
     }
 
-    // void OnTriggerEnter(Collider other)
-    // {
-    //     if (other.CompareTag("Coin"))
-    //     {
-    //         currentCoin = other.GetComponent<CoinBehaviour>();
-    //         currentCoin.Collect(this);
-    //         currentCoin = null; // Reset current coin after interaction
-    //     }
-    // }
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Key"))
+        {
+            currentKeycard = other.GetComponent<KeycardBehaviour>();
+            currentKeycard.Collect(this);
+            keycardsCollected++;
+            currentKeycard = null; // Reset current keycard after interaction
+        }
+
+        if (other.CompareTag("Finish"))
+        {
+            Destroy(other.gameObject);
+            congratulatoryText.text = "Congrats! You win!!1!!one!!!";
+        }
+    }
 }

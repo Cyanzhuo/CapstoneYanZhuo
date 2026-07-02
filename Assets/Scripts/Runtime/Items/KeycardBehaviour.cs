@@ -15,11 +15,6 @@ public class KeycardBehaviour : MonoBehaviour
 {
     [SerializeField]
     AudioClip keycardAudioClip; // Reference to the AudioClip component for playing sounds
-    MeshRenderer meshRenderer; // Reference to the MeshRenderer component for highlighting
-    [SerializeField]
-    Material originalMaterial; // Store the original material for the keycard
-    [SerializeField]
-    Material highlightMaterial; // Material used for highlighting the keycard
     bool isCollected = false; // Flag to prevent double collection
 
     /// <summary>
@@ -30,31 +25,6 @@ public class KeycardBehaviour : MonoBehaviour
     /// The keycard can be used to unlock locked doors
     /// The method is public so it can be accessed from other scripts
     /// </summary>
-
-    public void Start()
-    {
-        // Get the MeshRenderer component attached to this GameObject
-        meshRenderer = GetComponent<MeshRenderer>();
-        // Store the original color of the keycard for later use
-        originalMaterial = meshRenderer.material;
-    }
-
-    public void Highlight()
-    {
-        /// <summary>
-        /// Change the color of the keycard to highlight it
-        /// This is done by setting the material color to the highlight color
-        /// </summary>
-        meshRenderer.material = highlightMaterial;
-    }
-    public void Unhighlight()
-    {
-        /// <summary>
-        /// Reset the color of the keycard to its original color
-        /// This is done by setting the material color back to the original color
-        /// </summary>
-        meshRenderer.material = originalMaterial;
-    }
 
     public void Collect(PlayerBehaviour player)
     {
