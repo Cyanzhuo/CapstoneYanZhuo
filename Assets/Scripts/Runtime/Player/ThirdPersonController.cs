@@ -305,6 +305,12 @@ public class ThirdPersonController : MonoBehaviour
                 {
                     slideVelocity = dashDir * dashSpeed;
                 }
+                isDashing = false;
+                if (!dashCancelled)
+                {
+                    dashCancelTime = Time.time;
+                    dashCancelled = true;
+                }
 
                 InterimAudioDirector.TryPlayMove(InterimAudioCue.Slide, transform.position);
             }

@@ -34,6 +34,10 @@ public class Chaser : MonoBehaviour, IEnemyAI
     private Vector3 currentPatrolPoint;
     private bool hasPatrolPoint;
 
+    [Header("Focus State")]
+    [SerializeField] private float focusMoveSpeed = 2f; // Slower than normal chase speed
+    private float originalSpeed;
+
     public enum State
     {
         Idle, Patrol, FocusOnTarget, ChaseTarget, Attack, Retreat, Knockback
@@ -54,6 +58,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
 
     void Start()
     {
+        originalSpeed = myAgent.speed;
         startPosition = transform.position;
         SwitchState(State.Idle);
         StartCoroutine(StateMachine());
@@ -76,6 +81,11 @@ public class Chaser : MonoBehaviour, IEnemyAI
         }
 
         currentState = newState;
+
+        if (newState == State.FocusOnTarget)
+            myAgent.speed = focusMoveSpeed;
+        else
+            myAgent.speed = originalSpeed;
     }
 
     private IEnumerator StateMachine()

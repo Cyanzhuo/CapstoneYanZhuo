@@ -13,7 +13,7 @@ using UnityEngine;
 public class DoorBehaviour : MonoBehaviour
 {
     [SerializeField] bool isLocked = false;
-    [SerializeField] DoorLockVisual lockVisual;
+    [SerializeField] GameObject lockVisual;
     private bool isOpen = false;
     AudioSource doorAudioSource; // Reference to the AudioSource component for playing sounds
 
@@ -25,7 +25,7 @@ public class DoorBehaviour : MonoBehaviour
         // Initialize lock visual
         if (lockVisual != null)
         {
-            lockVisual.SetLocked(isLocked);
+            lockVisual.SetActive(isLocked);
         }
 
         // Get the AudioSource component attached to this GameObject
@@ -51,7 +51,7 @@ public class DoorBehaviour : MonoBehaviour
                 isLocked = false;
                 if (lockVisual != null)
                 {
-                    lockVisual.SetLocked(false);
+                    lockVisual.SetActive(false);
                 }
 
                 Debug.Log("Door unlocked!");

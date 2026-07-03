@@ -1914,6 +1914,7 @@ MonoBehaviour:
   minRadius: 1
   patrolRange: 5
   patrolRadius: 5
+  focusMoveSpeed: 1.5
   currentState: 0
 --- !u!114 &4329981487152351871
 MonoBehaviour:
