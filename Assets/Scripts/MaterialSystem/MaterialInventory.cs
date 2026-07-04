@@ -21,6 +21,8 @@ public class MaterialInventory : MonoBehaviour
 
     [Header("Axe Unlock State")]
     public bool axeUnlocked;
+    [SerializeField] private Weapons axe;
+    WeaponManager weaponManager;
 
     #region Public Getters
     public int RequiredShatteredArmor
@@ -38,6 +40,11 @@ public class MaterialInventory : MonoBehaviour
         get { return requiredTatteredCloth; }
     }
     #endregion
+
+    void Start()
+    {
+        weaponManager = GetComponent<WeaponManager>();
+    }
 
     #region Add Materials
     public void AddMaterial(MaterialType materialType, int amount)
@@ -122,6 +129,14 @@ public class MaterialInventory : MonoBehaviour
     public void UnlockAxe()
     {
         axeUnlocked = true;
+        if (weaponManager != null && axe != null)
+        {
+            weaponManager.UnlockWeapon(axe);
+        }
+        else
+        {
+            Debug.LogWarning("WeaponManager or Axe reference is missing.");
+        }
     }
     #endregion
 

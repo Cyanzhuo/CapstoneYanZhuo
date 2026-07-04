@@ -912,11 +912,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1016775284}
   m_SourcePrefab: {fileID: 100100000, guid: a8c085d51cbb9d245a3d4759debcaa39, type: 3}
---- !u!1 &564375582 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 3875157631585443535, guid: 52a94d7b7d991c54fbca68e27136cdb4, type: 3}
-  m_PrefabInstance: {fileID: 8399722347448150344}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &706059798
 GameObject:
   m_ObjectHideFlags: 0
@@ -1249,6 +1244,11 @@ Transform:
 --- !u!1 &937957716 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3051158638950102478, guid: 52a94d7b7d991c54fbca68e27136cdb4, type: 3}
+  m_PrefabInstance: {fileID: 8399722347448150344}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &999712510 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8311743611885650843, guid: 52a94d7b7d991c54fbca68e27136cdb4, type: 3}
   m_PrefabInstance: {fileID: 8399722347448150344}
   m_PrefabAsset: {fileID: 0}
 --- !u!1 &1016775283 stripped
@@ -3087,7 +3087,7 @@ PrefabInstance:
     - target: {fileID: 8151142309989815264, guid: f9a9b4a975395534ca0c7b07e257541d, type: 3}
       propertyPath: shopUI
       value: 
-      objectReference: {fileID: 564375582}
+      objectReference: {fileID: 999712510}
     m_RemovedComponents:
     - {fileID: 0}
     m_RemovedGameObjects: []
@@ -7398,6 +7398,7 @@ MonoBehaviour:
   minRadius: 3
   patrolRange: 5
   patrolRadius: 5
+  focusMoveSpeed: 2
   currentState: 0
 --- !u!65 &4319943191827880023
 BoxCollider:

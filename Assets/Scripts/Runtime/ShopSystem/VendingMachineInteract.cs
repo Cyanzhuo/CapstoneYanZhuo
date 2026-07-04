@@ -9,11 +9,9 @@ public class VendingMachineInteract : MonoBehaviour
 
     [Header("Interaction")]
     [SerializeField] private string playerTag = "Player";
-    [SerializeField] private float interactCooldown = 0.25f;
 
     private bool playerInRange = false;
     private bool shopOpen = false;
-    private float nextInteractTime = 0f;
 
     private void Start()
     {
@@ -21,18 +19,11 @@ public class VendingMachineInteract : MonoBehaviour
         {
             shopUI.SetActive(false);
         }
-
-        shopOpen = false;
     }
 
     private void Update()
     {
         if (!playerInRange)
-        {
-            return;
-        }
-
-        if (Time.time < nextInteractTime)
         {
             return;
         }
@@ -52,13 +43,7 @@ public class VendingMachineInteract : MonoBehaviour
 
     public void OpenShop()
     {
-        if (shopOpen)
-        {
-            return;
-        }
-
         shopOpen = true;
-        nextInteractTime = Time.time + interactCooldown;
 
         if (shopUI != null)
         {
@@ -73,13 +58,7 @@ public class VendingMachineInteract : MonoBehaviour
 
     public void CloseShop()
     {
-        if (!shopOpen)
-        {
-            return;
-        }
-
         shopOpen = false;
-        nextInteractTime = Time.time + interactCooldown;
 
         if (shopUI != null)
         {

@@ -2720,7 +2720,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Runtime::WeaponManager
   weapons:
   - {fileID: 11400000, guid: bc2cf3e9b702ffa41bbfd8437a6ff297, type: 2}
-  - {fileID: 11400000, guid: 1549d20ba8227204495ef2ab7025628b, type: 2}
   currentWeaponIndex: 0
   weaponHolder: {fileID: 6726298648135186669}
 --- !u!114 &2226638103196790326
@@ -2770,6 +2769,7 @@ MonoBehaviour:
   requiredArrowSticks: 3
   requiredTatteredCloth: 2
   axeUnlocked: 0
+  axe: {fileID: 11400000, guid: 1549d20ba8227204495ef2ab7025628b, type: 2}
 --- !u!1 &2149411944146390402
 GameObject:
   m_ObjectHideFlags: 0

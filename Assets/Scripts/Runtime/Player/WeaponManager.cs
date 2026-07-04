@@ -1,10 +1,11 @@
+using System.Linq;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class WeaponManager : MonoBehaviour
 {
     [Header("Weapons")]
-    [SerializeField] private Weapons[] weapons;
+    [SerializeField] public Weapons[] weapons;
     [SerializeField] private int currentWeaponIndex = 0;
     [SerializeField] private Transform weaponHolder; // Where the weapon model attaches
     private GameObject currentWeaponInstance;
@@ -17,6 +18,20 @@ public class WeaponManager : MonoBehaviour
         if (weapons.Length > 0)
         {
             EquipWeapon();
+        }
+    }
+
+    public void UnlockWeapon(Weapons newWeapon)
+    {
+        if (!weapons.Contains(newWeapon))
+        {
+            System.Array.Resize(ref weapons, weapons.Length + 1);
+            weapons[weapons.Length - 1] = newWeapon;
+            Debug.Log("Unlocked weapon: " + newWeapon.weaponName);
+        }
+        else
+        {
+            Debug.Log("Weapon already unlocked: " + newWeapon.weaponName);
         }
     }
 
