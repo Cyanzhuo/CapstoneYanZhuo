@@ -410,7 +410,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 112
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!114 &939363337205804099
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -481,11 +481,16 @@ MonoBehaviour:
   coinPickupPrefab: {fileID: 6612513625776112052, guid: c30ff2b17f7a1674e91ccb0bee8be2a2, type: 3}
   healthPotionPickupPrefab: {fileID: 4548051944110216264, guid: 5355732ed15f28c43ab09362a5467161, type: 3}
   damagePotionPickupPrefab: {fileID: 4235598908464709960, guid: bad479d40efecbf44978b887b7414342, type: 3}
+  materialPickupPrefab: {fileID: 8440475420402027080, guid: caa2ccbdd41e21d4c96d3fd10529acba, type: 3}
   coinDropChance: 1
   minCoins: 2
   maxCoins: 4
   healthPotionDropChance: 0.08
   damagePotionDropChance: 0.03
+  dropMaterial: 1
+  guaranteedMaterialAmount: 1
+  bonusMaterialDropChance: 0.25
+  bonusMaterialAmount: 1
   dropOffset: {x: 0, y: 0.6, z: 0}
   scatterRadius: 0.6
   dropOnDestroy: 1
