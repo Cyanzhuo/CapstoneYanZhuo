@@ -7,6 +7,9 @@ public class EnemyDropper : MonoBehaviour
     [SerializeField] private GameObject healthPotionPickupPrefab;
     [SerializeField] private GameObject damagePotionPickupPrefab;
 
+    [Header("Material Drop Prefab")]
+    [SerializeField] private GameObject materialPickupPrefab;
+
     [Header("Coin Drop")]
     [Range(0f, 1f)]
     [SerializeField] private float coinDropChance = 1f;
@@ -19,6 +22,15 @@ public class EnemyDropper : MonoBehaviour
 
     [Range(0f, 1f)]
     [SerializeField] private float damagePotionDropChance = 0.03f;
+
+    [Header("Material Drop")]
+    [SerializeField] private bool dropMaterial = true;
+    [SerializeField] private int guaranteedMaterialAmount = 1;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float bonusMaterialDropChance = 0.25f;
+
+    [SerializeField] private int bonusMaterialAmount = 1;
 
     [Header("Drop Position")]
     [SerializeField] private Vector3 dropOffset = new Vector3(0f, 0.8f, 0f);
@@ -76,6 +88,7 @@ public class EnemyDropper : MonoBehaviour
         TryDropCoins();
         TryDropPotion(healthPotionPickupPrefab, healthPotionDropChance, PickupType.HealthPotion);
         TryDropPotion(damagePotionPickupPrefab, damagePotionDropChance, PickupType.DamagePotion);
+        TryDropMaterial();
     }
 
     private void TryDropCoins()
@@ -142,6 +155,48 @@ public class EnemyDropper : MonoBehaviour
         }
 
         Debug.Log(gameObject.name + " dropped " + potionType);
+    }
+
+    private void TryDropMaterial()
+    {
+        if (!dropMaterial)
+        {
+            return;
+        }
+
+        if (materialPickupPrefab == null)
+        {
+            Debug.Log(gameObject.name + " has no Material Pickup Prefab assigned.");
+            return;
+        }
+
+        SpawnMaterial(guaranteedMaterialAmount);
+
+        float roll = Random.value;
+
+        if (roll <= bonusMaterialDropChance)
+        {
+            SpawnMaterial(bonusMaterialAmount);
+        }
+    }
+
+    private void SpawnMaterial(int amount)
+    {
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        for (int i = 0; i < amount; i++)
+        {
+            Instantiate(
+                materialPickupPrefab,
+                GetDropPosition(),
+                Quaternion.identity
+            );
+        }
+
+        Debug.Log(gameObject.name + " dropped material x" + amount);
     }
 
     private Vector3 GetDropPosition()
