@@ -302,7 +302,11 @@ public class EnemyBehaviour : MonoBehaviour
     {
         // Place for death particles or sound triggers
         Debug.Log($"{gameObject.name} defeated.");
-        FindFirstObjectByType<KillCounter>().RegisterKill();
+        KillCounter[] counters = FindObjectsByType<KillCounter>(FindObjectsSortMode.None);
+        foreach (var counter in counters)
+        {
+            counter.RegisterKill();
+        }
         Destroy(gameObject);
     }
     #endregion
