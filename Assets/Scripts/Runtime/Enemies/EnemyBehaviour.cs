@@ -13,9 +13,10 @@ public interface IEnemyAI
 public class EnemyBehaviour : MonoBehaviour
 {
     [Header("Stats")]
-    public float health = 100;
-    float collisionDamage = 5;
-    float timeTillDemise = 0.5f;
+    [SerializeField] private float maxHealth = 100f;
+    public float health;
+    [SerializeField] float collisionDamage = 5;
+    [SerializeField] float timeTillDemise = 0.5f;
     float demiseTimer = 0f;
     bool beingPushed;
     Vector3 pushDirection;
@@ -39,6 +40,13 @@ public class EnemyBehaviour : MonoBehaviour
 
     [Header("UI")]
     public TMP_Text healthText;
+
+    [Header("Boss Settings")]
+    [SerializeField] public bool isBoss = false;
+    [SerializeField] private float bossPhaseChangeThreshold = 0.5f; // 50% health
+    public bool isInPhaseTwo = false;
+    [SerializeField] private float maxShield = 50f;
+    float currentShield;
 
     // Components cached for performance
     private Rigidbody rb;
@@ -83,6 +91,12 @@ public class EnemyBehaviour : MonoBehaviour
 
     void Start()
     {
+        health = maxHealth;
+        if (isBoss)
+        {
+            currentShield = maxShield;
+            ShieldedHealthText(Color.green);
+        }
         UpdateHealthText();
     }
 
@@ -169,6 +183,17 @@ public class EnemyBehaviour : MonoBehaviour
                 return;
             }
         }
+        
+        if (isBoss && currentShield > 0)
+        {
+            currentShield -= amount;
+            amount /= 2; // Reduce damage to health when shield is active
+            if (currentShield <= 0)
+            {
+                ShieldedHealthText(Color.white); // Change health text color back to white when shield is depleted
+            }
+        }
+
         health -= amount;
         currentPayback = Mathf.Clamp(currentPayback + payback, 0, maxPayback);
         enraged = currentPayback == maxPayback && health > 0;
@@ -188,6 +213,14 @@ public class EnemyBehaviour : MonoBehaviour
         {
             health = 0;
             demiseTimer = timeTillDemise; // Start the death timer
+        }
+        else if (isBoss && health <= bossPhaseChangeThreshold * maxHealth && !isInPhaseTwo)
+        {
+            // Trigger phase change for the boss
+            isInPhaseTwo = true;
+            currentShield = maxShield;
+            ShieldedHealthText(Color.green);
+            Debug.Log("Boss phase change triggered!");
         }
 
         UpdateHealthText();
@@ -213,6 +246,11 @@ public class EnemyBehaviour : MonoBehaviour
         {
             counterTriggered = false;
             return;
+        }
+
+        if (isBoss && currentShield > 0)
+        {
+            return; // Boss is shielded, ignore knockback
         }
         
         if (myAgent != null && myAgent.enabled)
@@ -245,6 +283,11 @@ public class EnemyBehaviour : MonoBehaviour
 
     public void Push(Vector3 direction, Vector3 verticalMotion, Vector3 knockback)
     {
+        if (isBoss && currentShield > 0)
+        {
+            return; // Boss is shielded, ignore push
+        }
+
         if (myAgent != null && myAgent.enabled)
         {
             myAgent.enabled = false; // Disable NavMeshAgent to allow for physics-based knockback
@@ -295,6 +338,14 @@ public class EnemyBehaviour : MonoBehaviour
         if (healthText != null)
         {
             healthText.text = health.ToString();
+        }
+    }
+
+    private void ShieldedHealthText(Color color)
+    {
+        if (healthText != null)
+        {
+            healthText.color = color;
         }
     }
 

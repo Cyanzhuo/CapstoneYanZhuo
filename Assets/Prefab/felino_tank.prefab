@@ -423,13 +423,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 062cd6ce90360bc4296d6bee85b3d560, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::EnemyBehaviour
+  maxHealth: 200
   health: 200
+  collisionDamage: 5
+  timeTillDemise: 0.5
   maxPayback: 50
   currentPayback: 0
   enragedAura: {fileID: 7190403183540347706}
   groundCheckDistance: 0.5
   groundSphereRadius: 0.2
   healthText: {fileID: 9109739552333065939}
+  isBoss: 0
+  bossPhaseChangeThreshold: 0.5
+  isInPhaseTwo: 0
   attack: {fileID: 0}
   currentState: 0
   counterChance: 0.5
@@ -465,6 +471,8 @@ MonoBehaviour:
   patrolRange: 5
   patrolRadius: 5
   focusMoveSpeed: 1
+  bombPrefab: {fileID: 0}
+  bossP2FocusMoveSpeed: 3
   currentState: 0
 --- !u!114 &8269557920787090675
 MonoBehaviour:

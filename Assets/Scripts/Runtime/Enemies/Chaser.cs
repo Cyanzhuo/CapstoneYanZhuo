@@ -38,6 +38,11 @@ public class Chaser : MonoBehaviour, IEnemyAI
     [SerializeField] private float focusMoveSpeed = 2f; // Slower than normal chase speed
     private float originalSpeed;
 
+    [Header("Only for Boss")]
+    [SerializeField] private GameObject bombPrefab; // Prefab for the bomb to drop in phase two
+    [SerializeField] private float bossP2FocusMoveSpeed = 3f;
+    [SerializeField] private float bossP2ChaseMoveSpeed = 3.5f;
+
     public enum State
     {
         Idle, Patrol, FocusOnTarget, ChaseTarget, Attack, Retreat, Knockback
@@ -83,9 +88,27 @@ public class Chaser : MonoBehaviour, IEnemyAI
         currentState = newState;
 
         if (newState == State.FocusOnTarget)
-            myAgent.speed = focusMoveSpeed;
+        {
+            if (enemyBehaviour != null && enemyBehaviour.isBoss && enemyBehaviour.isInPhaseTwo)
+            {
+                myAgent.speed = bossP2FocusMoveSpeed;
+            }
+            else
+            {
+                myAgent.speed = focusMoveSpeed;
+            }
+        }
         else
-            myAgent.speed = originalSpeed;
+        {
+            if (enemyBehaviour != null && enemyBehaviour.isBoss && enemyBehaviour.isInPhaseTwo)
+            {
+                myAgent.speed = bossP2ChaseMoveSpeed;
+            }
+            else
+            {
+                myAgent.speed = originalSpeed;
+            }
+        }
     }
 
     private IEnumerator StateMachine()
@@ -156,6 +179,10 @@ public class Chaser : MonoBehaviour, IEnemyAI
             {
                 circleDirection *= -1f;
                 directionChangeTimer = 0f;
+                if (enemyBehaviour != null && enemyBehaviour.isBoss && enemyBehaviour.isInPhaseTwo)
+                {
+                    Instantiate(bombPrefab, transform.position, Quaternion.identity);
+                }
             }
 
             // Face the target
