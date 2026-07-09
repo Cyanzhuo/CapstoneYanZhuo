@@ -41,6 +41,9 @@ public class EnemyBehaviour : MonoBehaviour
     [Header("UI")]
     public TMP_Text healthText;
 
+    [Header("Kill Counter")]
+    [SerializeField] private KillCounter killCounter;
+
     [Header("Boss Settings")]
     [SerializeField] public bool isBoss = false;
     [SerializeField] private float bossPhaseChangeThreshold = 0.5f; // 50% health
@@ -353,10 +356,9 @@ public class EnemyBehaviour : MonoBehaviour
     {
         // Place for death particles or sound triggers
         Debug.Log($"{gameObject.name} defeated.");
-        KillCounter[] counters = FindObjectsByType<KillCounter>(FindObjectsSortMode.None);
-        foreach (var counter in counters)
+        if (killCounter != null)
         {
-            counter.RegisterKill();
+            killCounter.RegisterKill();
         }
         Destroy(gameObject);
     }

@@ -4962,5 +4962,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   lifetime: 1
-  damage: 15
+  damage: 20
+  payback: -20
   hitStopDuration: 0.1

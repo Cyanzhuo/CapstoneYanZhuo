@@ -261,7 +261,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Game.Runtime::EnemyHitbox
   weaponCollider: {fileID: 2147863667923505473}
   colliderOffByDefault: 0
-  DamageAmount: 10
+  DamageAmount: 5
   hitCue: 12
   shortHitStopDuration: 0.05
   longHitStopDuration: 0.1
