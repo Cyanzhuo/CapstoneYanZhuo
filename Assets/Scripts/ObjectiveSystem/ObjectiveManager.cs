@@ -1,3 +1,7 @@
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
+
 using UnityEngine;
 using TMPro;
 
@@ -19,10 +23,20 @@ public class ObjectiveManager : MonoBehaviour
     [SerializeField] private MaterialInventory materialInventory;
     [SerializeField] private PlayerInventory playerInventory;
 
-    [Header("Objective UI")]
+    [Header("Current Objective HUD")]
+    [SerializeField] private GameObject objectiveHudRoot;
     [SerializeField] private TMP_Text objectiveTitleText;
     [SerializeField] private TMP_Text objectiveProgressText;
     [SerializeField] private TMP_Text objectiveRewardText;
+
+    [Header("Quest Screen UI")]
+    [SerializeField] private GameObject questPanel;
+    [SerializeField] private TMP_Text questListText;
+    [SerializeField] private TMP_Text eyeStateText;
+
+    [Header("Eye Button UI")]
+    [SerializeField] private GameObject viewButtonObject;
+    [SerializeField] private GameObject unviewButtonObject;
 
     [Header("Kill Objectives")]
     [SerializeField] private int firstKillTarget = 3;
@@ -45,10 +59,16 @@ public class ObjectiveManager : MonoBehaviour
     [Header("Objective Complete Delay")]
     [SerializeField] private float objectiveCompleteDelay = 2f;
 
+    [Header("Settings")]
+    [SerializeField] private bool objectiveHudVisible = true;
+
     private ObjectiveStep currentObjectiveStep = ObjectiveStep.DefeatThreeEnemies;
 
     private bool showingCompleteMessage;
     private float completeMessageTimer;
+
+    private bool questPanelOpen;
+    private float previousTimeScale = 1f;
 
     private int currentKillCount;
 
@@ -71,16 +91,36 @@ public class ObjectiveManager : MonoBehaviour
             currentKillCount = killCounter.KillCount;
         }
 
+        if (questPanel != null)
+        {
+            questPanel.SetActive(false);
+        }
+
+        ApplyObjectiveHudVisibility();
         RefreshObjectiveUI();
+        RefreshQuestPanelUI();
+        RefreshEyeStateUI();
     }
 
     private void Update()
     {
         FindMissingReferences();
 
+        if (QuestKeyPressedThisFrame())
+        {
+            ToggleQuestPanel();
+            return;
+        }
+
+        if (ViewKeyPressedThisFrame())
+        {
+            ToggleObjectiveHud();
+            return;
+        }
+
         if (showingCompleteMessage)
         {
-            completeMessageTimer -= Time.deltaTime;
+            completeMessageTimer -= Time.unscaledDeltaTime;
 
             ShowObjectiveCompletedMessage();
 
@@ -89,6 +129,7 @@ public class ObjectiveManager : MonoBehaviour
                 showingCompleteMessage = false;
                 MoveToNextObjective();
                 RefreshObjectiveUI();
+                RefreshQuestPanelUI();
             }
 
             return;
@@ -102,6 +143,49 @@ public class ObjectiveManager : MonoBehaviour
         }
 
         RefreshObjectiveUI();
+
+        if (questPanelOpen)
+        {
+            RefreshQuestPanelUI();
+        }
+    }
+
+    private bool QuestKeyPressedThisFrame()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.qKey.wasPressedThisFrame)
+        {
+            return true;
+        }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            return true;
+        }
+#endif
+
+        return false;
+    }
+
+    private bool ViewKeyPressedThisFrame()
+    {
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.vKey.wasPressedThisFrame)
+        {
+            return true;
+        }
+#endif
+
+#if ENABLE_LEGACY_INPUT_MANAGER
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            return true;
+        }
+#endif
+
+        return false;
     }
 
     private void UpdateKillCount(int newKillCount)
@@ -168,7 +252,6 @@ public class ObjectiveManager : MonoBehaviour
         }
     }
 
-    #region Objective Checks
     private void CheckDefeatThreeEnemies()
     {
         if (currentKillCount >= firstKillTarget)
@@ -230,9 +313,7 @@ public class ObjectiveManager : MonoBehaviour
             Debug.Log("Objective Complete: Craft the Axe.");
         }
     }
-    #endregion
 
-    #region Objective Progression
     private void CompleteCurrentObjective(int coinReward)
     {
         GiveCoinReward(coinReward);
@@ -271,9 +352,7 @@ public class ObjectiveManager : MonoBehaviour
                 break;
         }
     }
-    #endregion
 
-    #region Rewards
     private void GiveCoinReward(int amount)
     {
         if (amount <= 0) return;
@@ -288,19 +367,93 @@ public class ObjectiveManager : MonoBehaviour
             playerInventory.AddCoins(amount);
         }
     }
-    #endregion
 
-    #region UI
+    public void ToggleQuestPanel()
+    {
+        if (questPanelOpen)
+        {
+            CloseQuestPanel();
+        }
+        else
+        {
+            OpenQuestPanel();
+        }
+    }
+
+    public void OpenQuestPanel()
+    {
+        if (questPanelOpen) return;
+
+        questPanelOpen = true;
+        previousTimeScale = Time.timeScale;
+        Time.timeScale = 0f;
+
+        if (questPanel != null)
+        {
+            questPanel.SetActive(true);
+        }
+
+        RefreshQuestPanelUI();
+        RefreshEyeStateUI();
+    }
+
+    public void CloseQuestPanel()
+    {
+        if (!questPanelOpen) return;
+
+        questPanelOpen = false;
+
+        if (questPanel != null)
+        {
+            questPanel.SetActive(false);
+        }
+
+        Time.timeScale = previousTimeScale;
+    }
+
+    public void ToggleObjectiveHud()
+    {
+        objectiveHudVisible = !objectiveHudVisible;
+
+        ApplyObjectiveHudVisibility();
+        RefreshObjectiveUI();
+        RefreshEyeStateUI();
+    }
+
+    public void ShowObjectiveHud()
+    {
+        objectiveHudVisible = true;
+
+        ApplyObjectiveHudVisibility();
+        RefreshObjectiveUI();
+        RefreshEyeStateUI();
+    }
+
+    public void HideObjectiveHud()
+    {
+        objectiveHudVisible = false;
+
+        ApplyObjectiveHudVisibility();
+        RefreshEyeStateUI();
+    }
+
     private void StartObjectiveCompletedMessage()
     {
         showingCompleteMessage = true;
         completeMessageTimer = objectiveCompleteDelay;
 
         ShowObjectiveCompletedMessage();
+        RefreshQuestPanelUI();
     }
 
     private void ShowObjectiveCompletedMessage()
     {
+        if (!objectiveHudVisible)
+        {
+            ApplyObjectiveHudVisibility();
+            return;
+        }
+
         SetText(objectiveTitleText, "Objective Completed");
         SetText(objectiveProgressText, "");
         SetText(objectiveRewardText, "");
@@ -308,7 +461,9 @@ public class ObjectiveManager : MonoBehaviour
 
     private void RefreshObjectiveUI()
     {
-        if (objectiveTitleText == null && objectiveProgressText == null && objectiveRewardText == null)
+        ApplyObjectiveHudVisibility();
+
+        if (!objectiveHudVisible)
         {
             return;
         }
@@ -324,30 +479,15 @@ public class ObjectiveManager : MonoBehaviour
                 break;
 
             case ObjectiveStep.CollectSomeArmor:
-                ShowMaterialObjective(
-                    "Collect Armor",
-                    materialInventory != null ? materialInventory.shatteredArmor : 0,
-                    armorTarget,
-                    armorReward
-                );
+                ShowMaterialObjective("Collect Armor", GetArmorAmount(), armorTarget, armorReward);
                 break;
 
             case ObjectiveStep.CollectSomeSticks:
-                ShowMaterialObjective(
-                    "Collect Sticks",
-                    materialInventory != null ? materialInventory.arrowSticks : 0,
-                    sticksTarget,
-                    sticksReward
-                );
+                ShowMaterialObjective("Collect Sticks", GetSticksAmount(), sticksTarget, sticksReward);
                 break;
 
             case ObjectiveStep.CollectSomeCloth:
-                ShowMaterialObjective(
-                    "Collect Cloth",
-                    materialInventory != null ? materialInventory.tatteredCloth : 0,
-                    clothTarget,
-                    clothReward
-                );
+                ShowMaterialObjective("Collect Cloth", GetClothAmount(), clothTarget, clothReward);
                 break;
 
             case ObjectiveStep.CraftAxe:
@@ -364,30 +504,161 @@ public class ObjectiveManager : MonoBehaviour
         }
     }
 
-    private void ShowKillObjective(string title, int target, int reward)
+    private void RefreshQuestPanelUI()
     {
-        int shownKills = currentKillCount;
-
-        if (shownKills > target)
+        if (questListText == null)
         {
-            shownKills = target;
+            return;
         }
 
+        switch (currentObjectiveStep)
+        {
+            case ObjectiveStep.DefeatThreeEnemies:
+                questListText.text =
+                    "Defeat 3 Enemies\n" +
+                    GetKillProgress(firstKillTarget) + "\n" +
+                    "Reward: +" + firstKillReward + " Coins";
+                break;
+
+            case ObjectiveStep.DefeatSixEnemies:
+                questListText.text =
+                    "Defeat 6 Enemies\n" +
+                    GetKillProgress(secondKillTarget) + "\n" +
+                    "Reward: +" + secondKillReward + " Coins";
+                break;
+
+            case ObjectiveStep.CollectSomeArmor:
+                questListText.text =
+                    "Collect Armor\n" +
+                    "Progress: " + ClampToTarget(GetArmorAmount(), armorTarget) + " / " + armorTarget + "\n" +
+                    "Reward: +" + armorReward + " Coins";
+                break;
+
+            case ObjectiveStep.CollectSomeSticks:
+                questListText.text =
+                    "Collect Sticks\n" +
+                    "Progress: " + ClampToTarget(GetSticksAmount(), sticksTarget) + " / " + sticksTarget + "\n" +
+                    "Reward: +" + sticksReward + " Coins";
+                break;
+
+            case ObjectiveStep.CollectSomeCloth:
+                questListText.text =
+                    "Collect Cloth\n" +
+                    "Progress: " + ClampToTarget(GetClothAmount(), clothTarget) + " / " + clothTarget + "\n" +
+                    "Reward: +" + clothReward + " Coins";
+                break;
+
+            case ObjectiveStep.CraftAxe:
+                questListText.text =
+                    "Craft the Axe\n" +
+                    "Go to the Vending Machine\n" +
+                    "Reward: +" + craftAxeReward + " Coins";
+                break;
+
+            case ObjectiveStep.Complete:
+                questListText.text =
+                    "All Objectives Completed";
+                break;
+        }
+    }
+
+    private void ShowKillObjective(string title, int target, int reward)
+    {
         SetText(objectiveTitleText, title);
-        SetText(objectiveProgressText, "Progress: " + shownKills + " / " + target);
+        SetText(objectiveProgressText, GetKillProgress(target));
         SetText(objectiveRewardText, "Reward: +" + reward + " coins");
     }
 
     private void ShowMaterialObjective(string title, int currentAmount, int targetAmount, int reward)
     {
-        if (currentAmount > targetAmount)
+        SetText(objectiveTitleText, title);
+        SetText(objectiveProgressText, "Progress: " + ClampToTarget(currentAmount, targetAmount) + " / " + targetAmount);
+        SetText(objectiveRewardText, "Reward: +" + reward + " coins");
+    }
+
+    private string GetKillProgress(int target)
+    {
+        return "Progress: " + ClampToTarget(currentKillCount, target) + " / " + target;
+    }
+
+    private int GetArmorAmount()
+    {
+        if (materialInventory == null) return 0;
+
+        return materialInventory.shatteredArmor;
+    }
+
+    private int GetSticksAmount()
+    {
+        if (materialInventory == null) return 0;
+
+        return materialInventory.arrowSticks;
+    }
+
+    private int GetClothAmount()
+    {
+        if (materialInventory == null) return 0;
+
+        return materialInventory.tatteredCloth;
+    }
+
+    private int ClampToTarget(int amount, int target)
+    {
+        if (amount > target)
         {
-            currentAmount = targetAmount;
+            return target;
         }
 
-        SetText(objectiveTitleText, title);
-        SetText(objectiveProgressText, "Progress: " + currentAmount + " / " + targetAmount);
-        SetText(objectiveRewardText, "Reward: +" + reward + " coins");
+        return amount;
+    }
+
+    private void ApplyObjectiveHudVisibility()
+    {
+        if (objectiveHudRoot != null)
+        {
+            objectiveHudRoot.SetActive(objectiveHudVisible);
+            return;
+        }
+
+        if (objectiveTitleText != null)
+        {
+            objectiveTitleText.gameObject.SetActive(objectiveHudVisible);
+        }
+
+        if (objectiveProgressText != null)
+        {
+            objectiveProgressText.gameObject.SetActive(objectiveHudVisible);
+        }
+
+        if (objectiveRewardText != null)
+        {
+            objectiveRewardText.gameObject.SetActive(objectiveHudVisible);
+        }
+    }
+
+    private void RefreshEyeStateUI()
+    {
+        if (eyeStateText != null)
+        {
+            if (objectiveHudVisible)
+            {
+                eyeStateText.text = "Objective HUD: ON";
+            }
+            else
+            {
+                eyeStateText.text = "Objective HUD: OFF";
+            }
+        }
+
+        if (viewButtonObject != null)
+        {
+            viewButtonObject.SetActive(!objectiveHudVisible);
+        }
+
+        if (unviewButtonObject != null)
+        {
+            unviewButtonObject.SetActive(objectiveHudVisible);
+        }
     }
 
     private void SetText(TMP_Text textObject, string value)
@@ -397,5 +668,4 @@ public class ObjectiveManager : MonoBehaviour
             textObject.text = value;
         }
     }
-    #endregion
 }
