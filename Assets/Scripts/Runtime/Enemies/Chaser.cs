@@ -392,6 +392,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
             animator.SetBool("IsStrafing", currentState == State.FocusOnTarget);
             animator.SetFloat("Speed", myAgent.velocity.magnitude);
             animator.SetBool("IsKnockback", currentState == State.Knockback);
+            animator.SetBool("IsGrounded", enemyBehaviour != null ? enemyBehaviour.IsGrounded : true);
         }
     }
 

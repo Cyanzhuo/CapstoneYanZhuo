@@ -55,6 +55,7 @@ public class EnemyBehaviour : MonoBehaviour
     private Rigidbody rb;
     NavMeshAgent myAgent;
     IEnemyAI enemyAI;
+    Animator animator;
     [SerializeField] private Attack attack;
 
     public enum EnemyState
@@ -86,6 +87,7 @@ public class EnemyBehaviour : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         myAgent = GetComponent<NavMeshAgent>();
         enemyAI = GetComponent<IEnemyAI>();
+        animator = GetComponent<Animator>();
         if (attack == null)
         {
             attack = FindFirstObjectByType<Attack>();
@@ -281,6 +283,11 @@ public class EnemyBehaviour : MonoBehaviour
         if (enemyAI != null)
         {
             enemyAI.EnterKnockbackState();
+        }
+
+        if (animator != null)
+        {
+            animator.SetTrigger("Knockback");
         }
     }
 

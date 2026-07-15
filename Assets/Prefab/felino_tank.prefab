@@ -433,9 +433,11 @@ MonoBehaviour:
   groundCheckDistance: 0.5
   groundSphereRadius: 0.2
   healthText: {fileID: 9109739552333065939}
+  killCounter: {fileID: 0}
   isBoss: 0
   bossPhaseChangeThreshold: 0.5
   isInPhaseTwo: 0
+  maxShield: 50
   attack: {fileID: 0}
   currentState: 0
   counterChance: 0.5
@@ -473,6 +475,7 @@ MonoBehaviour:
   focusMoveSpeed: 1
   bombPrefab: {fileID: 0}
   bossP2FocusMoveSpeed: 3
+  bossP2ChaseMoveSpeed: 3.5
   currentState: 0
 --- !u!114 &8269557920787090675
 MonoBehaviour:
