@@ -8,6 +8,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
     NavMeshAgent myAgent;
     Rigidbody rb;
     EnemyBehaviour enemyBehaviour;
+    Animator animator;
     [SerializeField] EnemyHitbox hitbox;
 
     [Header("Audio")]
@@ -53,6 +54,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
     {
         myAgent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
         enemyBehaviour = GetComponent<EnemyBehaviour>();
 
         if (hitbox != null)
@@ -76,6 +78,8 @@ public class Chaser : MonoBehaviour, IEnemyAI
         {
             orbitAngle = 0f; // Reset orbit angle when not in FocusOnTarget state
         }
+
+        UpdateAnimation();
     }
 
     public void SwitchState(State newState)
@@ -168,6 +172,10 @@ public class Chaser : MonoBehaviour, IEnemyAI
         float notAttackingTimer = 0f;
         float directionChangeTimer = 0f;
         float circleDirection = 1f; // 1 for clockwise, -1 for counter
+        if (animator != null)
+        {
+            animator.SetFloat("StrafeDirection", circleDirection);
+        }
         // make the enemy turn to face the player and pace slowly around the player
         while (currentState == State.FocusOnTarget)
         {
@@ -179,6 +187,10 @@ public class Chaser : MonoBehaviour, IEnemyAI
             {
                 circleDirection *= -1f;
                 directionChangeTimer = 0f;
+                if (animator != null)
+                {
+                    animator.SetFloat("StrafeDirection", circleDirection);
+                }
                 if (enemyBehaviour != null && enemyBehaviour.isBoss && enemyBehaviour.isInPhaseTwo)
                 {
                     Instantiate(bombPrefab, transform.position, Quaternion.identity);
@@ -229,13 +241,12 @@ public class Chaser : MonoBehaviour, IEnemyAI
     IEnumerator Attack()
     {
         InterimAudioDirector.TryPlayMove(attackStartCue, transform.position);
-        yield return new WaitForSeconds(0.5f); // Placeholder for wind-up duration
-        hitbox.ActivateHitbox();
-        // Wait for attack animation to finish before switching to retreat
-        yield return new WaitForSeconds(0.5f); // Placeholder for attack duration
-        hitbox.DeactivateHitbox();
-        SwitchState(State.Retreat);
-        yield break;
+        animator.SetTrigger("Attack");
+        
+        while (currentState == State.Attack)
+        {
+            yield return null;
+        }
     }
     
     IEnumerator Retreat()
@@ -367,5 +378,38 @@ public class Chaser : MonoBehaviour, IEnemyAI
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireCube(centerPoint.position + transform.forward * playerProximityThreshold, attackBoxSize);
+    }
+
+    void UpdateAnimation()
+    {
+        if (animator != null)
+        {
+            bool isMoving = currentState == State.Patrol || 
+                            currentState == State.ChaseTarget;
+
+            animator.SetBool("IsMoving", isMoving);
+            animator.SetBool("IsRetreating", currentState == State.Retreat);
+            animator.SetBool("IsStrafing", currentState == State.FocusOnTarget);
+            animator.SetFloat("Speed", myAgent.velocity.magnitude);
+            animator.SetBool("IsKnockback", currentState == State.Knockback);
+        }
+    }
+
+    // Called by animation event
+    public void OnAttackWindupEnd()
+    {
+        hitbox.ActivateHitbox();
+    }
+
+    // Called by animation event
+    public void OnAttackActiveEnd()
+    {
+        hitbox.DeactivateHitbox();
+    }
+
+    // Called by animation event at end of attack animation
+    public void OnAttackComplete()
+    {
+        SwitchState(State.Retreat);
     }
 }
