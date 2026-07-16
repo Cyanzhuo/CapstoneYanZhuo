@@ -27,6 +27,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
     [SerializeField] float rotationSpeed = 60f; // Speed at which the enemy rotates to face the target in FocusOnTarget state
     [SerializeField] float minRadius = 3f; // Minimum radius to maintain while circling the target
     private float orbitAngle = 0f;
+    private Vector3 directionToTarget;
 
     [Header("Random Patrol")]
     [SerializeField] private float patrolRange = 5f;  // How far from start position to roam
@@ -197,11 +198,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
                 }
             }
 
-            // Face the target
-            Vector3 directionToTarget = targetTransform.position - transform.position;
-            directionToTarget.y = 0; // Keep only horizontal direction
-            Quaternion lookRotation = Quaternion.LookRotation(directionToTarget.normalized);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
+            FaceTarget();
 
             // Move around the target in a circle
             orbitAngle += Time.deltaTime * circleDirection;
@@ -241,6 +238,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
     IEnumerator Attack()
     {
         InterimAudioDirector.TryPlayMove(attackStartCue, transform.position);
+        FaceTarget();
         animator.SetTrigger("Attack");
         
         while (currentState == State.Attack)
@@ -304,6 +302,18 @@ public class Chaser : MonoBehaviour, IEnemyAI
 
     IEnumerator Knockback()
     {
+        if (animator != null)
+        {
+            if (enemyBehaviour.currentState == EnemyBehaviour.EnemyState.Hitstun && enemyBehaviour.IsGrounded)
+            {
+                animator.SetTrigger("Hit");
+            }
+            else
+            {
+                animator.SetTrigger("Knockback");
+            }
+        }
+        
         // Wait for linear velocity to be 0 and enemy to be grounded before switching back to idle
         while (currentState == State.Knockback)
         {
@@ -314,6 +324,7 @@ public class Chaser : MonoBehaviour, IEnemyAI
                 // Re-enable NavMesh agent and rigidbody
                 myAgent.enabled = true;
                 rb.isKinematic = true;
+                enemyBehaviour.currentState = EnemyBehaviour.EnemyState.Normal; // Reset enemy state to normal
                 if (targetTransform != null)
                 {
                     SwitchState(State.FocusOnTarget);
@@ -343,6 +354,17 @@ public class Chaser : MonoBehaviour, IEnemyAI
         else
         {
             hasPatrolPoint = false; // Failed to find a valid patrol point
+        }
+    }
+
+    void FaceTarget()
+    {
+        if (targetTransform != null)
+        {
+            directionToTarget = targetTransform.position - transform.position;
+            directionToTarget.y = 0; // Keep only horizontal direction
+            Quaternion lookRotation = Quaternion.LookRotation(directionToTarget.normalized);
+            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
         }
     }
 

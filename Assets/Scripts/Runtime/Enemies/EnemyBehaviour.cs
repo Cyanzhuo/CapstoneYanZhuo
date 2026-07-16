@@ -55,7 +55,6 @@ public class EnemyBehaviour : MonoBehaviour
     private Rigidbody rb;
     NavMeshAgent myAgent;
     IEnemyAI enemyAI;
-    Animator animator;
     [SerializeField] private Attack attack;
 
     public enum EnemyState
@@ -87,7 +86,6 @@ public class EnemyBehaviour : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         myAgent = GetComponent<NavMeshAgent>();
         enemyAI = GetComponent<IEnemyAI>();
-        animator = GetComponent<Animator>();
         if (attack == null)
         {
             attack = FindFirstObjectByType<Attack>();
@@ -112,11 +110,11 @@ public class EnemyBehaviour : MonoBehaviour
             switch (currentState) // Handle state-specific logic when spiked into the ground
             {
                 case EnemyState.Spiked:
-                    currentState = EnemyState.Normal;
+                    currentState = EnemyState.Knockback;
                     TakeDamage(collisionDamage);
                     break;
                 case EnemyState.Rebound:
-                    currentState = EnemyState.Normal;
+                    currentState = EnemyState.Knockback;
                     TakeDamage(collisionDamage);
                     rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z); // Reset vertical velocity
                     rb.AddForce(Vector3.up * (attack.launcherForce + 1), ForceMode.VelocityChange);
@@ -283,11 +281,6 @@ public class EnemyBehaviour : MonoBehaviour
         if (enemyAI != null)
         {
             enemyAI.EnterKnockbackState();
-        }
-
-        if (animator != null)
-        {
-            animator.SetTrigger("Knockback");
         }
     }
 

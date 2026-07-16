@@ -8,6 +8,7 @@ public class ArcherAI : MonoBehaviour, IEnemyAI
     private NavMeshAgent agent;
     Rigidbody rb;
     EnemyBehaviour enemyBehaviour;
+    Animator animator;
 
     [Header("Target")]
     [SerializeField] private Transform player;
@@ -60,12 +61,28 @@ public class ArcherAI : MonoBehaviour, IEnemyAI
         agent = GetComponent<NavMeshAgent>();
         rb = GetComponent<Rigidbody>();
         enemyBehaviour = GetComponent<EnemyBehaviour>();
+        animator = GetComponent<Animator>();
     }
 
     private void Start()
     {
         spawnPosition = transform.position;
         StartCoroutine(StateMachine());
+    }
+
+    void Update()
+    {
+        if (animator != null)
+        {
+            bool isMoving = currentState == ArcherState.Patrol || 
+                            currentState == ArcherState.MoveToRange;
+
+            animator.SetBool("IsMoving", isMoving);
+            animator.SetBool("IsRetreating", currentState == ArcherState.Retreat);
+            animator.SetFloat("Speed", agent.velocity.magnitude);
+            animator.SetBool("IsKnockback", currentState == ArcherState.Knockback);
+            animator.SetBool("IsGrounded", enemyBehaviour != null ? enemyBehaviour.IsGrounded : true);
+        }
     }
 
     private IEnumerator StateMachine()
@@ -397,6 +414,18 @@ public class ArcherAI : MonoBehaviour, IEnemyAI
 
     IEnumerator Knockback()
     {
+        if (animator != null)
+        {
+            if (enemyBehaviour.currentState == EnemyBehaviour.EnemyState.Hitstun && enemyBehaviour.IsGrounded)
+            {
+                animator.SetTrigger("Hit");
+            }
+            else
+            {
+                animator.SetTrigger("Knockback");
+            }
+        }
+        
         // Wait for linear velocity to be 0 and enemy to be grounded before switching back to idle
         while (currentState == ArcherState.Knockback)
         {

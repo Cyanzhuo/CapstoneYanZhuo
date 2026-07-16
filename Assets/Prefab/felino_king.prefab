@@ -1831,9 +1831,11 @@ MonoBehaviour:
   groundCheckDistance: 0.5
   groundSphereRadius: 0.2
   healthText: {fileID: 8427286161232833155}
+  killCounter: {fileID: 0}
   isBoss: 1
   bossPhaseChangeThreshold: 0.5
   isInPhaseTwo: 0
+  maxShield: 50
   attack: {fileID: 0}
   currentState: 0
   counterChance: 0.5
@@ -1871,6 +1873,7 @@ MonoBehaviour:
   focusMoveSpeed: 1.5
   bombPrefab: {fileID: 8341047622101353228, guid: 4da109b72f6ac8a4e99ab963bd7b1a3e, type: 3}
   bossP2FocusMoveSpeed: 2
+  bossP2ChaseMoveSpeed: 3.5
   currentState: 0
 --- !u!1 &4429234524283631229
 GameObject:
@@ -12478,7 +12481,6 @@ GameObject:
   - component: {fileID: 3180678525188700741}
   - component: {fileID: 395346261366099290}
   - component: {fileID: 899313875148965164}
-  - component: {fileID: 334026064332539068}
   m_Layer: 0
   m_Name: claymore
   m_TagString: Untagged
@@ -12559,27 +12561,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &334026064332539068
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8360622193930461193}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.08, y: 0.40000007, z: 0.08000002}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &8863619935845501896
 GameObject:
   m_ObjectHideFlags: 0
