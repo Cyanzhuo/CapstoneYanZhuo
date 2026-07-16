@@ -235,27 +235,11 @@ public class ArcherAI : MonoBehaviour, IEnemyAI
         FacePlayer();
 
         InterimAudioDirector.TryPlayMove(InterimAudioCue.BasicAttack, transform.position);
-        yield return new WaitForSeconds(attackWindupTime);
+        animator.SetTrigger("Attack");
 
-        ShootProjectile();
-
-        yield return new WaitForSeconds(attackRecoveryTime);
-
-        if (player == null)
+        while (currentState == ArcherState.RangedAttack)
         {
-            currentState = ArcherState.Idle;
-            yield break;
-        }
-
-        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
-
-        if (distanceToPlayer < minimumDistance)
-        {
-            currentState = ArcherState.Retreat;
-        }
-        else
-        {
-            currentState = ArcherState.MoveToRange;
+            yield return null;
         }
     }
 
@@ -489,5 +473,32 @@ public class ArcherAI : MonoBehaviour, IEnemyAI
 
         Gizmos.color = Color.blue;
         Gizmos.DrawWireSphere(Application.isPlaying ? spawnPosition : transform.position, patrolRange);
+    }
+    
+    // Called by animation event
+    public void OnAttackWindupEnd()
+    {
+        ShootProjectile();
+    }
+
+    // Called by animation event
+    public void OnAttackComplete()
+    {
+        if (player == null)
+        {
+            currentState = ArcherState.Idle;
+            return;
+        }
+
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+
+        if (distanceToPlayer < minimumDistance)
+        {
+            currentState = ArcherState.Retreat;
+        }
+        else
+        {
+            currentState = ArcherState.MoveToRange;
+        }
     }
 }
