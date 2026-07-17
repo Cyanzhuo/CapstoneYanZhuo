@@ -9,6 +9,7 @@ public class LungeDetection : MonoBehaviour
     private Attack attack;
     private ThirdPersonController playerController;
     private Rigidbody rb;
+    private Animator animator;
     public Collider sphere;
     
     void Start()
@@ -16,6 +17,7 @@ public class LungeDetection : MonoBehaviour
         attack = GetComponentInParent<Attack>();
         playerController = GetComponentInParent<ThirdPersonController>();
         rb = GetComponentInParent<Rigidbody>();
+        animator = GetComponentInParent<Animator>();
         sphere = GetComponent<Collider>();
     }
 
@@ -28,6 +30,10 @@ public class LungeDetection : MonoBehaviour
             {
                 playerController.StopAttacking();
                 sphere.enabled = false;
+                if (animator != null)
+                {
+                    animator.SetFloat("AtkAnimaSpeed", 1f);
+                }
             }
         }
     }
@@ -37,6 +43,10 @@ public class LungeDetection : MonoBehaviour
         if (currentAttackTarget != null && other.gameObject == currentAttackTarget && other.CompareTag("Enemy") && playerController.isAttacking)
         {
             playerController.StopAttacking();
+            if (animator != null)
+            {
+                animator.SetFloat("AtkAnimaSpeed", 1f);
+            }
             attack.directionToEnemy = Vector3.zero; // Reset direction after successfully hitting an enemy
             if (!playerController.IsGrounded && !hasAppliedAirBoost)
             {

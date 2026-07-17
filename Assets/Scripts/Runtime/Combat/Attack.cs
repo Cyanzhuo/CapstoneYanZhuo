@@ -503,6 +503,11 @@ public class Attack : MonoBehaviour
         directionToEnemy = (targetPosition - AttackOrigin).normalized;
         
         playerController.SetAttackForce(directionToEnemy, force, true);
+
+        if (animator != null)
+        {
+            animator.SetFloat("AtkAnimaSpeed", 0f);
+        }
     }
     #endregion
 
