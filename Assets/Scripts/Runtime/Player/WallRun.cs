@@ -19,7 +19,7 @@ public class WallRun : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        playerController = GetComponentInParent<ThirdPersonController>();
+        playerController = GetComponent<ThirdPersonController>();
         rb = GetComponent<Rigidbody>();
     }
 

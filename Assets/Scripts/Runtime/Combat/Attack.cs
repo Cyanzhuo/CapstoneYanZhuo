@@ -314,6 +314,13 @@ public class Attack : MonoBehaviour
                 Launcher(lightLauncherForce, false);
             }
         }
+        else // Normal Jump
+        {
+            if (animator != null)
+            {
+                animator.SetTrigger("Jump");
+            }
+        }
     }
 
     public void OnCrouch(InputValue value)
@@ -385,6 +392,21 @@ public class Attack : MonoBehaviour
         // In the final game, this should be called via an Animation Event
         weaponHitbox.ActivateHitbox();
         attackDurationTimer = currentWeapon.hitboxLifetime;
+        if (animator != null)
+        {
+            switch (currentAttackType)
+            {
+                case AttackType.Normal:
+                    animator.SetTrigger("Attack" + (attackStage + 1));
+                    break;
+                case AttackType.Charged:
+                case AttackType.Finisher:
+                    animator.SetTrigger("ChargedOrFinisher");
+                    break;
+                default:
+                    break;
+            }
+        }
 
         // 4. Lunge toward enemy (Magnetism)
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);
@@ -502,7 +524,10 @@ public class Attack : MonoBehaviour
         currentAttackType = AttackType.Launcher;
         weaponHitbox.ActivateHitbox();
         attackDurationTimer = currentWeapon.hitboxLifetime;
-        // ... animation/effect logic ...
+        if (animator != null)
+        {
+            animator.SetTrigger("Launcher");
+        }
 
         float range = countsAsDashAttack ? dashRange : defaultRange;
         Collider[] hits = Physics.OverlapSphere(AttackOrigin, range, enemyLayer);

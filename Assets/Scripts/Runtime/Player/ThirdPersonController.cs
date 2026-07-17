@@ -665,8 +665,6 @@ public class ThirdPersonController : MonoBehaviour
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0, rb.linearVelocity.z);
         rb.AddForce(Vector3.up * force, ForceMode.Impulse);
         
-        if (animator) animator.SetTrigger("Jump");
-
         Invoke(nameof(ResetExitSlope), 0.1f);
     }
 

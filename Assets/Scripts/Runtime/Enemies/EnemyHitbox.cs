@@ -7,7 +7,6 @@ public class EnemyHitbox : MonoBehaviour
     [SerializeField] private bool colliderOffByDefault = true;
     [SerializeField] private int DamageAmount = 10;
     [SerializeField] private InterimAudioCue hitCue = InterimAudioCue.BasicAttackHit;
-    private Coroutine activeHitStop = null;
     [SerializeField] private float shortHitStopDuration = 0.05f;
     [SerializeField] private float longHitStopDuration = 0.1f;
 

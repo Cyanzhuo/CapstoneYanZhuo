@@ -30,8 +30,6 @@ public class ArcherAI : MonoBehaviour, IEnemyAI
     [SerializeField] private float attackRange = 10f;
     [SerializeField] private float minimumDistance = 4f;
     [SerializeField] private float attackCooldown = 1.5f;
-    [SerializeField] private float attackWindupTime = 0.35f;
-    [SerializeField] private float attackRecoveryTime = 0.4f;
 
     [Header("Retreat")]
     [SerializeField] private float retreatDuration = 0.8f;
