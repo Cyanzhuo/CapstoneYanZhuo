@@ -38,6 +38,14 @@ public class EnemyHitbox : MonoBehaviour
         {
             HealthBehaviour playerHealth = other.GetComponentInParent<HealthBehaviour>();
             PlayerBehaviour playerBehaviour = other.GetComponentInParent<PlayerBehaviour>();
+            ThirdPersonController playerController = other.GetComponentInParent<ThirdPersonController>();
+            if (playerController != null)
+            {
+                if (playerController.WasRecentlyDashing(0.1f))
+                {
+                    return;
+                }
+            }
             if (playerHealth != null)
             {
                 playerHealth.ApplyDamage(playerBehaviour, DamageAmount);
