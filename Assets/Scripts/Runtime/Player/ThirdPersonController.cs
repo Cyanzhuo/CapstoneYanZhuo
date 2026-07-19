@@ -401,6 +401,22 @@ public class ThirdPersonController : MonoBehaviour
         if (!isBraking) brakeMultiplier = Mathf.MoveTowards(brakeMultiplier, 1f, moveSpeed * Time.fixedDeltaTime); // Gradually reset brake multiplier when not braking
         
         // 1. Filter out input according to context
+        if (lockOnTarget != null)
+        {
+            // Restrict left and right movement, so the player can only move towards or away from the target
+            Vector3 directionToTarget = (lockOnTarget.transform.position - transform.position).normalized;
+            directionToTarget.y = 0; // Ignore vertical component
+
+            // Split input into forward/backward and side components
+            float forwardInput = Vector3.Dot(worldMoveDir, directionToTarget);
+            Vector3 forwardComponent = directionToTarget * forwardInput;
+            Vector3 sideComponent = worldMoveDir - forwardComponent;
+            
+            // Dampen side movement by 50%
+            float sideDampening = 0.5f;
+            worldMoveDir = forwardComponent + (sideComponent * sideDampening);
+        }
+
         if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
         {
             // Get the up-and-down-slope direction
@@ -425,7 +441,7 @@ public class ThirdPersonController : MonoBehaviour
         {
             upSlopeResistance = 0f; // Reset resistance when not on slope or not crouching
             float movementMultiplier = (isCrouching && IsGrounded) ? sneakSpeed : moveSpeed;
-            targetVelocity = GetCameraRelativeDirection(moveInput) * movementMultiplier * brakeMultiplier;
+            targetVelocity = worldMoveDir * movementMultiplier * brakeMultiplier;
         }
         
         if (OnSlope() && isCrouching && IsGrounded && !exitingSlope)
