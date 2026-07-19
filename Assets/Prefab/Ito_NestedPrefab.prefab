@@ -2809,7 +2809,7 @@ MonoBehaviour:
   horizontalExclusionAngle: 45
   defaultForce: 6
   dashForce: 10
-  launcherForce: 7.25
+  launcherForce: 7.5
   mediumLauncherForce: 6
   lightLauncherForce: 5
   juggleForce: 1.5

@@ -297,7 +297,7 @@ public class Attack : MonoBehaviour
 
         if (playerController.IsGrounded && (playerController.isCrouching || playerController.landedFromGroundSlam)) // Crouch Launcher
         {
-            Launcher(launcherForce, true);
+            return; // Let TPC handle this
         }
         else if (windingUpSlam)
         {
@@ -518,7 +518,7 @@ public class Attack : MonoBehaviour
         Launcher(force, true, countsAsDashAttack);
     }
 
-    private void Launcher(float force, bool shouldTriggerCooldown, bool countsAsDashAttack = false)
+    public void Launcher(float force, bool shouldTriggerCooldown, bool countsAsDashAttack = false)
     {
         InterimAudioDirector.TryPlayMove(
             isCharging ? InterimAudioCue.ChargedCrouchAttack : InterimAudioCue.LauncherJump,

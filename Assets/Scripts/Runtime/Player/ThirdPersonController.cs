@@ -671,6 +671,10 @@ public class ThirdPersonController : MonoBehaviour
         if (highJumpRequested)
         {
             force *= highJumpMultiplier;
+            if (attack != null)
+            {
+                attack.Launcher(attack.launcherForce, true);
+            }
         }
         else if (bufferedJumpWasReleased)
         {
