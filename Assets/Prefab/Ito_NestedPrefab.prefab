@@ -3179,6 +3179,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Game.Runtime::MyMenu
   menuPanel: {fileID: 3051158638950102478}
+  shopUI: {fileID: 8311743611885650843}
+  shopTag: Shop
 --- !u!114 &8224932931312384428
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -28492,7 +28494,6 @@ GameObject:
   - component: {fileID: 606739984075824128}
   - component: {fileID: 2299692040477148471}
   - component: {fileID: 3010126030885267721}
-  - component: {fileID: 1016559381239062806}
   m_Layer: 5
   m_Name: Shop UI
   m_TagString: Untagged
@@ -28604,20 +28605,6 @@ MonoBehaviour:
   healthPotionOwnedText: {fileID: 2698844120080213776}
   damagePotionOwnedText: {fileID: 4051366739946968455}
   messageText: {fileID: 0}
---- !u!114 &1016559381239062806
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8311743611885650843}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7c8c1fc3ad6bde4d802480cccf1f07b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::VendingMachineInteract
-  shopUI: {fileID: 8311743611885650843}
-  playerTag: Player
 --- !u!1 &8318260378348108468
 GameObject:
   m_ObjectHideFlags: 0
@@ -29537,8 +29524,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1016559381239062806}
-        m_TargetAssemblyTypeName: VendingMachineInteract, Game.Runtime
+      - m_Target: {fileID: 2226638103196790326}
+        m_TargetAssemblyTypeName: MyMenu, Game.Runtime
         m_MethodName: CloseShop
         m_Mode: 1
         m_Arguments:
