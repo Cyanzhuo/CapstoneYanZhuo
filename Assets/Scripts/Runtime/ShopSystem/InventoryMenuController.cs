@@ -12,11 +12,13 @@ public class InventoryMenuController : MonoBehaviour
     [SerializeField] private GameObject coinIconImage;
     [SerializeField] private GameObject damagePotionImage;
     [SerializeField] private GameObject healthPotionImage;
+    [SerializeField] private GameObject superHealthPotionImage;
 
     [Header("Inventory Count Text")]
     [SerializeField] private TextMeshProUGUI coinCountText;
     [SerializeField] private TextMeshProUGUI damagePotionCountText;
     [SerializeField] private TextMeshProUGUI healthPotionCountText;
+    [SerializeField] private TextMeshProUGUI superHealthPotionCountText;
 
     private void Start()
     {
@@ -77,6 +79,11 @@ public class InventoryMenuController : MonoBehaviour
         if (healthPotionImage != null)
         {
             healthPotionImage.SetActive(true);
+        }
+
+        if (superHealthPotionImage != null)
+        {
+            superHealthPotionImage.SetActive(true);
         }
 
         ClearSelectedButton();
@@ -143,6 +150,28 @@ public class InventoryMenuController : MonoBehaviour
         RefreshInventory();
     }
 
+    public void UseSuperHealthPotion()
+    {
+        if (PlayerInventory.Instance == null)
+        {
+            Debug.LogWarning("PlayerInventory missing.");
+            return;
+        }
+
+        bool usedPotion = PlayerInventory.Instance.UseSuperHealthPotion();
+
+        if (usedPotion)
+        {
+            Debug.Log("Used Super Health Potion.");
+        }
+        else
+        {
+            Debug.Log("No Super Health Potion.");
+        }
+
+        RefreshInventory();
+    }
+
     public void RefreshInventory()
     {
         if (PlayerInventory.Instance == null)
@@ -150,12 +179,14 @@ public class InventoryMenuController : MonoBehaviour
             SetText(coinCountText, "0");
             SetText(damagePotionCountText, "0");
             SetText(healthPotionCountText, "0");
+            SetText(superHealthPotionCountText, "0");
             return;
         }
 
         SetText(coinCountText, PlayerInventory.Instance.Coins.ToString());
         SetText(damagePotionCountText, PlayerInventory.Instance.DamagePotions.ToString());
         SetText(healthPotionCountText, PlayerInventory.Instance.HealthPotions.ToString());
+        SetText(superHealthPotionCountText, PlayerInventory.Instance.SuperHealthPotions.ToString());
     }
 
     private void SetText(TextMeshProUGUI textObject, string value)

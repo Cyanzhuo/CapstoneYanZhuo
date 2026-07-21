@@ -11,10 +11,12 @@ public class PlayerInventory : MonoBehaviour
     [Header("Potions")]
     [SerializeField] private int healthPotions = 0;
     [SerializeField] private int damagePotions = 0;
+    [SerializeField] private int superHealthPotions = 0;
 
     public int Coins => coins;
     public int HealthPotions => healthPotions;
     public int DamagePotions => damagePotions;
+    public int SuperHealthPotions => superHealthPotions;
 
     public event Action OnInventoryChanged;
 
@@ -76,6 +78,16 @@ public class PlayerInventory : MonoBehaviour
         Debug.Log("Damage potions: " + damagePotions);
     }
 
+    public void AddSuperHealthPotion(int amount)
+    {
+        if (amount <= 0) return;
+
+        superHealthPotions += amount;
+        OnInventoryChanged?.Invoke();
+
+        Debug.Log("Super health potions: " + superHealthPotions);
+    }
+
     public bool UseHealthPotion()
     {
         if (healthPotions <= 0)
@@ -103,6 +115,21 @@ public class PlayerInventory : MonoBehaviour
         OnInventoryChanged?.Invoke();
 
         Debug.Log("Used damage potion. Remaining: " + damagePotions);
+        return true;
+    }
+
+    public bool UseSuperHealthPotion()
+    {
+        if (superHealthPotions <= 0)
+        {
+            Debug.Log("No super health potions.");
+            return false;
+        }
+
+        superHealthPotions--;
+        OnInventoryChanged?.Invoke();
+
+        Debug.Log("Used super health potion. Remaining: " + superHealthPotions);
         return true;
     }
 }

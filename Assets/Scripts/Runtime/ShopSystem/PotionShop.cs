@@ -6,11 +6,13 @@ public class PotionShop : MonoBehaviour
     [Header("Prices")]
     [SerializeField] private int healthPotionCost = 15;
     [SerializeField] private int damagePotionCost = 15;
+    [SerializeField] private int superHealthPotionCost = 50;
 
     [Header("Shop Counter Text")]
     [SerializeField] private TextMeshProUGUI coinText;
     [SerializeField] private TextMeshProUGUI healthPotionOwnedText;
     [SerializeField] private TextMeshProUGUI damagePotionOwnedText;
+    [SerializeField] private TextMeshProUGUI superHealthPotionOwnedText;
     [SerializeField] private TextMeshProUGUI messageText;
 
     private void OnEnable()
@@ -73,6 +75,27 @@ public class PotionShop : MonoBehaviour
         UpdateShopUI();
     }
 
+    public void BuySuperHealthPotion()
+    {
+        if (PlayerInventory.Instance == null)
+        {
+            ShowMessage("Player inventory missing.");
+            return;
+        }
+
+        if (PlayerInventory.Instance.SpendCoins(superHealthPotionCost))
+        {
+            PlayerInventory.Instance.AddSuperHealthPotion(1);
+            ShowMessage("Bought Super Health Potion.");
+        }
+        else
+        {
+            ShowMessage("Not enough coins.");
+        }
+
+        UpdateShopUI();
+    }
+
     private void UpdateShopUI()
     {
         if (PlayerInventory.Instance == null)
@@ -92,6 +115,11 @@ public class PotionShop : MonoBehaviour
                 damagePotionOwnedText.text = "0";
             }
 
+            if (superHealthPotionOwnedText != null)
+            {
+                superHealthPotionOwnedText.text = "0";
+            }
+
             return;
         }
 
@@ -108,6 +136,11 @@ public class PotionShop : MonoBehaviour
         if (damagePotionOwnedText != null)
         {
             damagePotionOwnedText.text = PlayerInventory.Instance.DamagePotions.ToString();
+        }
+
+        if (superHealthPotionOwnedText != null)
+        {
+            superHealthPotionOwnedText.text = PlayerInventory.Instance.SuperHealthPotions.ToString();
         }
     }
 

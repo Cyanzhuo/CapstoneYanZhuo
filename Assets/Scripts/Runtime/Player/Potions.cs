@@ -5,6 +5,7 @@ public class Potions : MonoBehaviour
 {
     // Amount of health to recover
     [SerializeField] int healAmount = 25;
+    [SerializeField] int fullHealAmount = 100;
     private PlayerInputActions controls;
     HealthBehaviour playerHealth;
     PlayerBehaviour playerBehaviour;
@@ -49,6 +50,20 @@ public class Potions : MonoBehaviour
         else
         {
             Debug.Log("No Damage Potion.");
+        }
+    }
+
+    public void OnSuperHeal(InputValue value)
+    {
+        if (playerInventory.UseSuperHealthPotion())
+        {
+            playerHealth.RecoverHealth(playerBehaviour, fullHealAmount);
+
+            inventoryMenuController.RefreshInventory();
+        }
+        else
+        {
+            Debug.Log("No Super Health Potion.");
         }
     }
 }
