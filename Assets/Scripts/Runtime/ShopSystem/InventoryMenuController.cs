@@ -8,20 +8,34 @@ public class InventoryMenuController : MonoBehaviour
     [SerializeField] private GameObject mainMenuView;
     [SerializeField] private GameObject inventoryUI;
 
+    [Header("Material Inventory")]
+    [SerializeField] private MaterialInventory materialInventory;
+
     [Header("Inventory Images")]
     [SerializeField] private GameObject coinIconImage;
     [SerializeField] private GameObject damagePotionImage;
     [SerializeField] private GameObject healthPotionImage;
     [SerializeField] private GameObject superHealthPotionImage;
 
-    [Header("Inventory Count Text")]
+    [Header("Weapon Inventory Items")]
+    [SerializeField] private GameObject axeItem;
+
+    [Header("Potion And Coin Count Text")]
     [SerializeField] private TextMeshProUGUI coinCountText;
     [SerializeField] private TextMeshProUGUI damagePotionCountText;
     [SerializeField] private TextMeshProUGUI healthPotionCountText;
     [SerializeField] private TextMeshProUGUI superHealthPotionCountText;
 
+    [Header("Material Count Text")]
+    [SerializeField] private TextMeshProUGUI shatteredArmorCountText;
+    [SerializeField] private TextMeshProUGUI arrowSticksCountText;
+    [SerializeField] private TextMeshProUGUI tatteredClothCountText;
+
     private void Start()
     {
+        FindMaterialInventory();
+        SubscribeToInventoryEvents();
+
         if (inventoryUI != null)
         {
             inventoryUI.SetActive(false);
@@ -37,20 +51,14 @@ public class InventoryMenuController : MonoBehaviour
 
     private void OnEnable()
     {
+        FindMaterialInventory();
+        SubscribeToInventoryEvents();
         RefreshInventory();
-
-        if (PlayerInventory.Instance != null)
-        {
-            PlayerInventory.Instance.OnInventoryChanged += RefreshInventory;
-        }
     }
 
     private void OnDisable()
     {
-        if (PlayerInventory.Instance != null)
-        {
-            PlayerInventory.Instance.OnInventoryChanged -= RefreshInventory;
-        }
+        UnsubscribeFromInventoryEvents();
     }
 
     public void OpenInventory()
@@ -86,6 +94,9 @@ public class InventoryMenuController : MonoBehaviour
             superHealthPotionImage.SetActive(true);
         }
 
+        FindMaterialInventory();
+        SubscribeToInventoryEvents();
+
         ClearSelectedButton();
         RefreshInventory();
     }
@@ -114,7 +125,8 @@ public class InventoryMenuController : MonoBehaviour
             return;
         }
 
-        bool usedPotion = PlayerInventory.Instance.UseHealthPotion();
+        bool usedPotion =
+            PlayerInventory.Instance.UseHealthPotion();
 
         if (usedPotion)
         {
@@ -136,7 +148,8 @@ public class InventoryMenuController : MonoBehaviour
             return;
         }
 
-        bool usedPotion = PlayerInventory.Instance.UseDamagePotion();
+        bool usedPotion =
+            PlayerInventory.Instance.UseDamagePotion();
 
         if (usedPotion)
         {
@@ -158,7 +171,8 @@ public class InventoryMenuController : MonoBehaviour
             return;
         }
 
-        bool usedPotion = PlayerInventory.Instance.UseSuperHealthPotion();
+        bool usedPotion =
+            PlayerInventory.Instance.UseSuperHealthPotion();
 
         if (usedPotion)
         {
@@ -174,6 +188,13 @@ public class InventoryMenuController : MonoBehaviour
 
     public void RefreshInventory()
     {
+        RefreshPotionAndCoinCounts();
+        RefreshMaterialCounts();
+        RefreshWeaponVisibility();
+    }
+
+    private void RefreshPotionAndCoinCounts()
+    {
         if (PlayerInventory.Instance == null)
         {
             SetText(coinCountText, "0");
@@ -183,13 +204,116 @@ public class InventoryMenuController : MonoBehaviour
             return;
         }
 
-        SetText(coinCountText, PlayerInventory.Instance.Coins.ToString());
-        SetText(damagePotionCountText, PlayerInventory.Instance.DamagePotions.ToString());
-        SetText(healthPotionCountText, PlayerInventory.Instance.HealthPotions.ToString());
-        SetText(superHealthPotionCountText, PlayerInventory.Instance.SuperHealthPotions.ToString());
+        SetText(
+            coinCountText,
+            PlayerInventory.Instance.Coins.ToString()
+        );
+
+        SetText(
+            damagePotionCountText,
+            PlayerInventory.Instance.DamagePotions.ToString()
+        );
+
+        SetText(
+            healthPotionCountText,
+            PlayerInventory.Instance.HealthPotions.ToString()
+        );
+
+        SetText(
+            superHealthPotionCountText,
+            PlayerInventory.Instance.SuperHealthPotions.ToString()
+        );
     }
 
-    private void SetText(TextMeshProUGUI textObject, string value)
+    private void RefreshMaterialCounts()
+    {
+        FindMaterialInventory();
+
+        if (materialInventory == null)
+        {
+            SetText(shatteredArmorCountText, "0");
+            SetText(arrowSticksCountText, "0");
+            SetText(tatteredClothCountText, "0");
+            return;
+        }
+
+        SetText(
+            shatteredArmorCountText,
+            materialInventory.shatteredArmor.ToString()
+        );
+
+        SetText(
+            arrowSticksCountText,
+            materialInventory.arrowSticks.ToString()
+        );
+
+        SetText(
+            tatteredClothCountText,
+            materialInventory.tatteredCloth.ToString()
+        );
+    }
+
+    private void RefreshWeaponVisibility()
+    {
+        bool axeIsUnlocked =
+            materialInventory != null &&
+            materialInventory.axeUnlocked;
+
+        if (axeItem != null)
+        {
+            axeItem.SetActive(axeIsUnlocked);
+        }
+    }
+
+    private void FindMaterialInventory()
+    {
+        if (materialInventory == null)
+        {
+            materialInventory =
+                FindFirstObjectByType<MaterialInventory>();
+        }
+    }
+
+    private void SubscribeToInventoryEvents()
+    {
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.OnInventoryChanged -=
+                RefreshInventory;
+
+            PlayerInventory.Instance.OnInventoryChanged +=
+                RefreshInventory;
+        }
+
+        if (materialInventory != null)
+        {
+            materialInventory.OnMaterialsChanged -=
+                RefreshInventory;
+
+            materialInventory.OnMaterialsChanged +=
+                RefreshInventory;
+        }
+    }
+
+    private void UnsubscribeFromInventoryEvents()
+    {
+        if (PlayerInventory.Instance != null)
+        {
+            PlayerInventory.Instance.OnInventoryChanged -=
+                RefreshInventory;
+        }
+
+        if (materialInventory != null)
+        {
+            materialInventory.OnMaterialsChanged -=
+                RefreshInventory;
+        }
+    }
+
+    private void SetText(
+        TextMeshProUGUI textObject,
+        string value
+    )
     {
         if (textObject != null)
         {

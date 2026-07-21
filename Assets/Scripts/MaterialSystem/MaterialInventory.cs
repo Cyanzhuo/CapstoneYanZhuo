@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class MaterialInventory : MonoBehaviour
@@ -8,6 +9,8 @@ public class MaterialInventory : MonoBehaviour
         ArrowSticks,
         TatteredCloth
     }
+
+    public event Action OnMaterialsChanged;
 
     [Header("Current Materials")]
     public int shatteredArmor;
@@ -22,7 +25,8 @@ public class MaterialInventory : MonoBehaviour
     [Header("Axe Unlock State")]
     public bool axeUnlocked;
     [SerializeField] private Weapons axe;
-    WeaponManager weaponManager;
+
+    private WeaponManager weaponManager;
 
     #region Public Getters
     public int RequiredShatteredArmor
@@ -41,7 +45,7 @@ public class MaterialInventory : MonoBehaviour
     }
     #endregion
 
-    void Start()
+    private void Start()
     {
         weaponManager = GetComponent<WeaponManager>();
     }
@@ -49,7 +53,10 @@ public class MaterialInventory : MonoBehaviour
     #region Add Materials
     public void AddMaterial(MaterialType materialType, int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0)
+        {
+            return;
+        }
 
         switch (materialType)
         {
@@ -69,33 +76,54 @@ public class MaterialInventory : MonoBehaviour
 
     public void AddShatteredArmor(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0)
+        {
+            return;
+        }
 
         shatteredArmor += amount;
+
         Debug.Log("Picked up Shattered Armor x" + amount);
+
+        NotifyMaterialsChanged();
     }
 
     public void AddArrowSticks(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0)
+        {
+            return;
+        }
 
         arrowSticks += amount;
+
         Debug.Log("Picked up Arrow Sticks x" + amount);
+
+        NotifyMaterialsChanged();
     }
 
     public void AddTatteredCloth(int amount)
     {
-        if (amount <= 0) return;
+        if (amount <= 0)
+        {
+            return;
+        }
 
         tatteredCloth += amount;
+
         Debug.Log("Picked up Tattered Cloth x" + amount);
+
+        NotifyMaterialsChanged();
     }
     #endregion
 
     #region Axe Crafting
     public bool CanCraftAxe()
     {
-        if (axeUnlocked) return false;
+        if (axeUnlocked)
+        {
+            return false;
+        }
 
         return shatteredArmor >= requiredShatteredArmor &&
                arrowSticks >= requiredArrowSticks &&
@@ -128,7 +156,18 @@ public class MaterialInventory : MonoBehaviour
 
     public void UnlockAxe()
     {
+        if (axeUnlocked)
+        {
+            return;
+        }
+
         axeUnlocked = true;
+
+        if (weaponManager == null)
+        {
+            weaponManager = GetComponent<WeaponManager>();
+        }
+
         if (weaponManager != null && axe != null)
         {
             weaponManager.UnlockWeapon(axe);
@@ -137,6 +176,8 @@ public class MaterialInventory : MonoBehaviour
         {
             Debug.LogWarning("WeaponManager or Axe reference is missing.");
         }
+
+        NotifyMaterialsChanged();
     }
     #endregion
 
@@ -167,6 +208,13 @@ public class MaterialInventory : MonoBehaviour
         axeUnlocked = false;
 
         Debug.Log("Material inventory reset.");
+
+        NotifyMaterialsChanged();
+    }
+
+    private void NotifyMaterialsChanged()
+    {
+        OnMaterialsChanged?.Invoke();
     }
     #endregion
 }
