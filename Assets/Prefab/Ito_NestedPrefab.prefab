@@ -2032,7 +2032,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2442,7 +2442,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InventoryMenuController
   mainMenuView: {fileID: 2341612258224118189}
   inventoryUI: {fileID: 1499536667315719303}
-  materialInventory: {fileID: 0}
+  materialInventory: {fileID: 8389710740953000822}
   coinIconImage: {fileID: 903594524354664774}
   damagePotionImage: {fileID: 7336419623415576610}
   healthPotionImage: {fileID: 23571899260448829}
@@ -2798,7 +2798,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 8.5, y: 100}
-  m_SizeDelta: {x: 110, y: 390}
+  m_SizeDelta: {x: 110, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5265918095125751775
 CanvasRenderer:
@@ -2828,7 +2828,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f301a7167ad47b546b6b354a2d766ce4, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 2cc574b0ff6de524399087ac0b1bbc94, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -14701,8 +14701,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 463, y: -300}
-  m_SizeDelta: {x: 350, y: 400}
+  m_AnchoredPosition: {x: 460, y: -300}
+  m_SizeDelta: {x: 345, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5324835858609169650
 CanvasRenderer:
@@ -16511,7 +16511,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 8.5, y: -90}
+  m_AnchoredPosition: {x: 8.5, y: -83}
   m_SizeDelta: {x: 370, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &189034660460156764
@@ -21745,7 +21745,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -30701,7 +30701,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b944a713b213878449c338fe7a14042c, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8e98fc340a305da48b0ae0fec8ff7bf9, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
