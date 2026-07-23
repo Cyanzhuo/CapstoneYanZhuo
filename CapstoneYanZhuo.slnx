@@ -2,10 +2,10 @@
   <Project Path="Game.Runtime.csproj" />
   <Project Path="LineworkLite.csproj" />
   <Project Path="majo.Core.csproj" />
+  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="LineworkLite.Editor.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="Game.UI.csproj" />
-  <Project Path="Assembly-CSharp.csproj" />
   <Project Path="Game.Input.csproj" />
   <Project Path="Game.Audio.csproj" />
   <Project Path="majo.Core.Editor.csproj" />
