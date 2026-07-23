@@ -6,7 +6,7 @@ public class PotionShop : MonoBehaviour
     [Header("Prices")]
     [SerializeField] private int healthPotionCost = 15;
     [SerializeField] private int damagePotionCost = 15;
-    [SerializeField] private int superHealthPotionCost = 50;
+    [SerializeField] private int superHealthPotionCost = 75;
 
     [Header("Shop Counter Text")]
     [SerializeField] private TextMeshProUGUI coinText;
@@ -21,6 +21,7 @@ public class PotionShop : MonoBehaviour
 
         if (PlayerInventory.Instance != null)
         {
+            PlayerInventory.Instance.OnInventoryChanged -= UpdateShopUI;
             PlayerInventory.Instance.OnInventoryChanged += UpdateShopUI;
         }
     }
@@ -86,7 +87,7 @@ public class PotionShop : MonoBehaviour
         if (PlayerInventory.Instance.SpendCoins(superHealthPotionCost))
         {
             PlayerInventory.Instance.AddSuperHealthPotion(1);
-            ShowMessage("Bought Super Health Potion.");
+            ShowMessage("Bought Full Health Potion.");
         }
         else
         {
@@ -96,51 +97,46 @@ public class PotionShop : MonoBehaviour
         UpdateShopUI();
     }
 
-    private void UpdateShopUI()
+    public void UpdateShopUI()
     {
         if (PlayerInventory.Instance == null)
         {
-            if (coinText != null)
-            {
-                coinText.text = "0";
-            }
-
-            if (healthPotionOwnedText != null)
-            {
-                healthPotionOwnedText.text = "0";
-            }
-
-            if (damagePotionOwnedText != null)
-            {
-                damagePotionOwnedText.text = "0";
-            }
-
-            if (superHealthPotionOwnedText != null)
-            {
-                superHealthPotionOwnedText.text = "0";
-            }
-
+            SetText(coinText, "0");
+            SetText(healthPotionOwnedText, "0");
+            SetText(damagePotionOwnedText, "0");
+            SetText(superHealthPotionOwnedText, "0");
             return;
         }
 
-        if (coinText != null)
-        {
-            coinText.text = PlayerInventory.Instance.Coins.ToString();
-        }
+        SetText(
+            coinText,
+            PlayerInventory.Instance.Coins.ToString()
+        );
 
-        if (healthPotionOwnedText != null)
-        {
-            healthPotionOwnedText.text = PlayerInventory.Instance.HealthPotions.ToString();
-        }
+        SetText(
+            healthPotionOwnedText,
+            PlayerInventory.Instance.HealthPotions.ToString()
+        );
 
-        if (damagePotionOwnedText != null)
-        {
-            damagePotionOwnedText.text = PlayerInventory.Instance.DamagePotions.ToString();
-        }
+        SetText(
+            damagePotionOwnedText,
+            PlayerInventory.Instance.DamagePotions.ToString()
+        );
 
-        if (superHealthPotionOwnedText != null)
+        SetText(
+            superHealthPotionOwnedText,
+            PlayerInventory.Instance.SuperHealthPotions.ToString()
+        );
+    }
+
+    private void SetText(
+        TextMeshProUGUI textObject,
+        string value
+    )
+    {
+        if (textObject != null)
         {
-            superHealthPotionOwnedText.text = PlayerInventory.Instance.SuperHealthPotions.ToString();
+            textObject.text = value;
         }
     }
 
